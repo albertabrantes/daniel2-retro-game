@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Monte a Estátua de Daniel · Build Daniel's Statue (Retro)</title>
+<meta name="description" content="Retro pixel game: build the statue of Daniel 2 / Jogo retrô: monte a estátua de Daniel 2">
+<meta name="theme-color" content="#0a0814">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tiny5&family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:#0a0814;color:#fff;font-family:'Tiny5','Press Start 2P',monospace;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+body{min-height:100vh;display:flex;justify-content:center;
+ background:#0a0814 repeating-linear-gradient(0deg,rgba(255,255,255,.015) 0 2px,transparent 2px 4px)}
+#app{width:100%;max-width:520px;position:relative;padding:6px 6px 14px}
+button{font-family:inherit;cursor:pointer;color:#fff}
+.top{position:relative;z-index:30;display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.top .ttl{flex:1;font-size:14px;line-height:1.5;color:#ffd84a;text-shadow:2px 2px 0 #7a2a00;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.pbtn{background:#2a1f5c;border:0;padding:8px 9px;font-size:15px;box-shadow:inset -3px -3px 0 #140c34,inset 3px 3px 0 #5a4aa8,0 0 0 2px #000;min-width:44px;min-height:36px}
+.pbtn:active{box-shadow:inset 3px 3px 0 #140c34,inset -3px -3px 0 #5a4aa8,0 0 0 2px #000}
+.pbtn:focus-visible,.choice:focus-visible,.sw:focus-visible,.partb:focus-visible{outline:3px solid #ffe14d;outline-offset:2px}
+.hud{display:flex;justify-content:space-between;background:#000;border:3px solid #fff;box-shadow:0 0 0 3px #000;padding:7px 8px;font-size:15px;margin-bottom:6px}
+.hud b{color:#ffe14d;font-weight:normal;font-family:"Press Start 2P",monospace;font-size:11px}
+#stage{position:relative;border:3px solid #fff;box-shadow:0 0 0 3px #000,0 6px 0 3px #000;background:#000;line-height:0}
+#cv{width:100%;height:auto;display:block;image-rendering:pixelated;image-rendering:crisp-edges;touch-action:manipulation;cursor:pointer}
+#hint{position:absolute;left:0;right:0;bottom:6px;text-align:center;font-size:14px;line-height:1.4;color:#fff;text-shadow:2px 2px 0 #000;pointer-events:none;animation:blink 1s steps(2) infinite}
+@keyframes blink{50%{opacity:0}}
+.parts{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:12px}
+.partb{border:0;font-size:14px;line-height:1.5;padding:9px 4px;min-height:48px;background:#3b3b46;box-shadow:inset -3px -3px 0 #1d1d24,inset 3px 3px 0 #6e6e7c,0 0 0 2px #000}
+.partb.sel{background:#6b5a10;box-shadow:inset -3px -3px 0 #3a3000,inset 3px 3px 0 #c9a92a,0 0 0 2px #ffe14d}
+.partb.ok{background:#1d6b2a;box-shadow:inset -3px -3px 0 #0b3a12,inset 3px 3px 0 #4fc35f,0 0 0 2px #000}
+.partb.half{background:#8a6a00;box-shadow:inset -3px -3px 0 #4a3800,inset 3px 3px 0 #e8c33a,0 0 0 2px #000}
+.partb.bad{background:#8a1d1d;box-shadow:inset -3px -3px 0 #4a0b0b,inset 3px 3px 0 #e05555,0 0 0 2px #000}
+.partb small{display:block;color:#ffe14d;font-size:12px;margin-top:3px}
+/* overlays */
+.ov{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;z-index:20;padding:8px}
+.ov.show{display:flex}
+.ov.center{align-items:center;padding-top:60px;background:rgba(5,3,15,.72)}
+.box{width:100%;max-width:508px;background:#10208a;border:4px solid #fff;box-shadow:0 0 0 4px #000,inset 0 0 0 3px #0a145a,8px 8px 0 4px rgba(0,0,0,.6);padding:12px;font-size:16px;line-height:1.45;max-height:92vh;overflow:auto}
+.box h2{font-size:18px;margin:0 0 10px;color:#ffe14d;line-height:1.5;font-weight:normal}
+.box h3{font-size:15px;margin:2px 0 8px;color:#9fd3ff;font-weight:normal;line-height:1.6}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.sw{background:#000;border:0;padding:6px 3px;font-size:12px;line-height:1.5;box-shadow:0 0 0 3px #fff,0 0 0 5px #000;display:flex;flex-direction:column;align-items:center;gap:5px;min-height:76px}
+.sw img{width:44px;height:44px;image-rendering:pixelated;display:block;border:2px solid #000}
+.sw:active{transform:translate(2px,2px)}
+.choice{border:0;background:#1a2fb8;font-size:14px;line-height:1.5;padding:10px 6px;min-height:46px;box-shadow:inset -3px -3px 0 #0a145a,inset 3px 3px 0 #5a78ff,0 0 0 2px #000;text-align:left}
+.choice:active{box-shadow:inset 3px 3px 0 #0a145a,inset -3px -3px 0 #5a78ff,0 0 0 2px #000}
+.choice .k{color:#ffe14d}
+.row{display:flex;gap:8px;margin-top:12px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+input.tx{font-family:inherit;font-size:20px;width:100%;padding:12px 8px;background:#000;color:#fff;border:3px solid #fff;outline:none;-webkit-user-select:text;user-select:text;border-radius:0}
+input.tx:focus{border-color:#ffe14d}
+.shake{animation:shk .35s steps(6)}
+@keyframes shk{0%,100%{transform:none}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.typer{min-height:150px;white-space:pre-wrap;word-break:break-word}
+.g{color:#6dff7a}.r{color:#ff6a6a}.y{color:#ffe14d}.c{color:#9fd3ff}.w{color:#fff}.dim{color:#b9c2ff}
+.cursor{display:inline-block;width:8px;height:10px;background:#fff;vertical-align:-1px;animation:blink .6s steps(2) infinite}
+.matchip{display:inline-flex;align-items:center;gap:6px;color:#ffe14d}
+.matchip img{width:16px;height:16px;image-rendering:pixelated;border:2px solid #000}
+/* title */
+#title .box{text-align:center;background:#0b0620;border-color:#ffd84a}
+.logo{font-size:32px;line-height:1.45;color:#ffd84a;text-shadow:3px 3px 0 #b5470b,6px 6px 0 #000;margin:6px 0 10px}
+.logo small{display:block;font-size:15px;color:#9fd3ff;text-shadow:2px 2px 0 #000;margin-top:10px}
+.press{font-size:20px;color:#fff;animation:blink 1s steps(2) infinite;margin:18px 0 8px;padding:12px;background:none;border:0;width:100%}
+.lvl{display:grid;gap:10px;margin-top:8px}
+.lvl .choice{text-align:center;font-size:18px;padding:14px 6px}
+.lvl .choice small{display:block;font-size:12px;color:#cfd6ff;margin-top:6px;line-height:1.6}
+.how{font-size:14px;color:#cfd6ff;line-height:1.8;margin-top:12px;text-align:left}
+.stars{font-size:22px;color:#ffe14d;letter-spacing:6px;text-shadow:3px 3px 0 #000;margin:8px 0}
+.stars .off{color:#3a3a55}
+.res td{padding:3px 0;font-size:15px}.res td:last-child{text-align:right;color:#ffe14d}
+.res{width:100%;border-collapse:collapse}
+#cap{position:absolute;left:4px;right:4px;top:6px;text-align:center;font-size:14px;line-height:1.7;color:#fff;text-shadow:2px 2px 0 #000,-1px -1px 0 #000;pointer-events:none;display:none;background:rgba(0,0,0,.45);padding:6px}
+#skip{position:absolute;right:6px;bottom:6px;display:none;font-size:14px;line-height:1}
+.newrec{color:#6dff7a;animation:blink .7s steps(2) infinite}
+.foot{font-size:12px;color:#6c6a8a;text-align:center;margin-top:14px;line-height:1.7}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="top">
+    <div class="ttl" id="tTitle"></div>
+    <button class="pbtn" id="langBtn" aria-label="Language / Idioma">PT</button>
+    <button class="pbtn" id="muteBtn" aria-label="Sound">♪ON</button>
+  </div>
+  <div class="hud" aria-live="polite">
+    <span><span id="lScore"></span> <b id="hScore">0000</b></span>
+    <span><span id="lTime"></span> <b id="hTime">0:00</b></span>
+    <span><span id="lParts"></span> <b id="hParts">0/6</b></span>
+  </div>
+  <div id="stage">
+    <canvas id="cv" width="192" height="176" aria-label="statue"></canvas>
+    <div id="hint"></div>
+    <div id="cap"></div>
+    <button class="pbtn" id="skip">SKIP ►►</button>
+  </div>
+  <div class="parts" id="parts"></div>
+  <div class="foot" id="foot"></div>
+</div>
+
+<div class="ov" id="dlg" role="dialog" aria-modal="true"><div class="box" id="dlgBox"></div></div>
+<div class="ov center show" id="title"><div class="box" id="titleBox"></div></div>
+<div class="ov center" id="results"><div class="box" id="resBox"></div></div>
+
+<script>
+"use strict";
+/* ================= TEXT ================= */
+const T={
+ pt:{title:"MONTE A ESTÁTUA DE DANIEL",sub:"Daniel 2:31-45",press:"APERTE START",tapToStart:"(toque na tela)",chooseLevel:"ESCOLHA O NÍVEL",
+  easy:"FÁCIL",hard:"DIFÍCIL",easyDesc:"Escolha o reino numa lista",hardDesc:"Digite o nome do reino · pontos x1,5",
+  how:"Toque numa parte da estátua (ou na pedra), escolha o material e depois diga qual reino ela representa. Em qualquer ordem! Rapidez e acertos dão mais pontos.",
+  score:"PONTOS",time:"TEMPO",parts:"PARTES",hint:"▲ TOQUE NUMA PARTE ▲",step1:"DE QUE MATERIAL É FEITO?",step2:"QUAL REINO REPRESENTA?",
+  typeHint:"Digite o reino...",ok:"OK ►",back:"◄ VOLTAR",close:"✕ FECHAR",material:"MATERIAL",kingdom:"REINO",correct:"CERTO!",wrong:"ERRADO",
+  answer:"Certo:",you:"Você:",cont:"CONTINUAR ►",results:"RESULTADO",base:"ACERTOS x100",speed:"BÔNUS RAPIDEZ",mult:"DIFÍCIL x1,5",total:"TOTAL",
+  correctN:"ACERTOS",best:"RECORDE",newRec:"NOVO RECORDE!",again:"JOGAR NOVAMENTE",change:"MUDAR NÍVEL",level:"NÍVEL",
+  smash:"A pedra, cortada sem mãos, atinge os pés de ferro e barro! (Dn 2:34)",chaff:"...e tudo virou palha que o vento levou. (Dn 2:35)",
+  mountain:"\"A pedra que atingiu a estátua virou uma grande montanha e encheu a terra inteira.\" (Daniel 2:35)",
+  skip:"PULAR ►►",empty:"Digite uma resposta!",pts:"pontos",done:"Essa parte já foi feita!",
+  foot:"Daniel 2 · Os reinos humanos passam; o Reino de Deus dura para sempre.",
+  finalMsg:"Deus conduz a história. Podemos confiar n'Ele para o nosso futuro!",soundOn:"♪ON",soundOff:"♪OFF",keys:"Teclado: setas + ENTER, 1-6 para escolher"},
+ en:{title:"BUILD DANIEL'S STATUE",sub:"Daniel 2:31-45",press:"PRESS START",tapToStart:"(tap the screen)",chooseLevel:"SELECT LEVEL",
+  easy:"EASY",hard:"HARD",easyDesc:"Pick the kingdom from a list",hardDesc:"Type the kingdom's name · points x1.5",
+  how:"Tap a part of the statue (or the stone), choose its material, then name the kingdom it stands for. Any order! Speed and accuracy earn more points.",
+  score:"SCORE",time:"TIME",parts:"PARTS",hint:"▲ TAP A PART ▲",step1:"WHAT IS IT MADE OF?",step2:"WHICH KINGDOM IS IT?",
+  typeHint:"Type the kingdom...",ok:"OK ►",back:"◄ BACK",close:"✕ CLOSE",material:"MATERIAL",kingdom:"KINGDOM",correct:"CORRECT!",wrong:"WRONG",
+  answer:"Answer:",you:"You:",cont:"CONTINUE ►",results:"RESULTS",base:"CORRECT x100",speed:"SPEED BONUS",mult:"HARD x1.5",total:"TOTAL",
+  correctN:"CORRECT",best:"HIGH SCORE",newRec:"NEW RECORD!",again:"PLAY AGAIN",change:"CHANGE LEVEL",level:"LEVEL",
+  smash:"The stone, cut out without hands, smites the feet of iron and clay! (Dan 2:34)",chaff:"...and it all became like chaff that the wind carried away. (Dan 2:35)",
+  mountain:"\"The stone that smote the image became a great mountain, and filled the whole earth.\" (Daniel 2:35)",
+  skip:"SKIP ►►",empty:"Type an answer!",pts:"points",done:"That part is already done!",
+  foot:"Daniel 2 · Human kingdoms pass away; God's kingdom stands forever.",
+  finalMsg:"God directs history. We can trust Him with our future!",soundOn:"♪ON",soundOff:"♪OFF",keys:"Keyboard: arrows + ENTER, 1-6 to choose"}
+};
+const MATS=[
+ {id:"gold",pt:"OURO",en:"GOLD",pal:["#5c3a06","#a8700a","#efb320","#fff3a0"]},
+ {id:"silver",pt:"PRATA",en:"SILVER",pal:["#3a4250","#7c8898","#c4ced8","#ffffff"]},
+ {id:"bronze",pt:"BRONZE",en:"BRONZE",pal:["#3e1e0c","#86461c","#c8773a","#f4b47c"]},
+ {id:"iron",pt:"FERRO",en:"IRON",pal:["#16181d","#3a4049","#5f6c79","#98a4b0"]},
+ {id:"clay",pt:"FERRO E BARRO",en:"IRON + CLAY",pal:["#16181d","#3a4049","#5f6c79","#98a4b0"],pal2:["#4a2814","#87502e","#b67a4c","#dcab7c"]},
+ {id:"stone",pt:"PEDRA",en:"STONE",pal:["#2c2824","#59524a","#8a8076","#bdb3a6"]}
+];
+const GREY=["#25252b","#44444d","#6a6a74","#93939d"];
+const KINGS=[
+ {id:"babylon",pt:"BABILÔNIA",en:"BABYLON",al:["babilonia","babylon","babilonico","babylonian","babylonians","babilonios","babel","nabucodonosor","nebuchadnezzar","imperio babilonico","babylonian empire","reino babilonico","caldeus","chaldeans"]},
+ {id:"persia",pt:"MEDO-PÉRSIA",en:"MEDO-PERSIA",al:["medo persia","medopersia","persia","medes and persians","medos e persas","medo persa","medo persas","persas","persians","persian","persa","medes","medos","media e persia","media persia","medo persian","medo persian empire","imperio persa","persian empire","ciro","cyrus","mede persia","medo-persia"]},
+ {id:"greece",pt:"GRÉCIA",en:"GREECE",al:["grecia","greece","greek","greeks","grego","gregos","grega","alexander","alexandre","alexander the great","alexandre o grande","macedonia","imperio grego","greek empire","grecia antiga","helenico"]},
+ {id:"rome",pt:"ROMA",en:"ROME",al:["roma","rome","roman","romans","romanos","romano","roman empire","imperio romano","imperio de roma"]},
+ {id:"europe",pt:"REINOS DIVIDIDOS DA EUROPA",en:"DIVIDED KINGDOMS OF EUROPE",al:["europa dividida","divided europe","divided kingdoms","reinos divididos","europe","europa","divided","dividido","divididos","dividida","divided kingdoms of europe","reinos divididos da europa","nacoes europeias","european nations","nacoes da europa","nations of europe","reinos da europa","kingdoms of europe","european kingdoms"]},
+ {id:"god",pt:"REINO DE DEUS",en:"GOD'S KINGDOM",al:["reino de deus","gods kingdom","god s kingdom","kingdom of god","jesus","cristo","christ","jesus cristo","jesus christ","reino eterno","eternal kingdom","deus","god","reino de cristo","kingdom of heaven","reino dos ceus","reino do ceu","heaven","ceu","reino celestial","heavenly kingdom","messias","messiah","everlasting kingdom"]}
+];
+const PARTS=[
+ {id:"head",p:1,pt:"CABEÇA",en:"HEAD",mat:"gold",king:"babylon",ref:"Daniel 2:32, 37-38",
+  kjv:"\"This image's head was of fine gold... Thou art this head of gold.\"",ptv:"\"A cabeça da estátua era de ouro puro... O senhor, ó rei, é a cabeça de ouro.\""},
+ {id:"chest",p:2,pt:"PEITO E BRAÇOS",en:"CHEST & ARMS",mat:"silver",king:"persia",ref:"Daniel 2:32, 39",
+  kjv:"\"His breast and his arms of silver... And after thee shall arise another kingdom inferior to thee.\"",ptv:"\"O peito e os braços eram de prata... Depois do senhor virá outro reino, mais fraco que o seu.\""},
+ {id:"belly",p:3,pt:"VENTRE E COXAS",en:"BELLY & THIGHS",mat:"bronze",king:"greece",ref:"Daniel 2:32, 39",
+  kjv:"\"His belly and his thighs of brass... another third kingdom of brass, which shall bear rule over all the earth.\"",ptv:"\"O ventre e as coxas eram de bronze... um terceiro reino, de bronze, vai dominar o mundo inteiro.\""},
+ {id:"legs",p:4,pt:"PERNAS",en:"LEGS",mat:"iron",king:"rome",ref:"Daniel 2:33, 40",
+  kjv:"\"His legs of iron... And the fourth kingdom shall be strong as iron: forasmuch as iron breaketh in pieces and subdueth all things.\"",ptv:"\"As pernas eram de ferro... O quarto reino será forte como o ferro, que quebra e esmaga tudo.\""},
+ {id:"feet",p:5,pt:"PÉS E DEDOS",en:"FEET & TOES",mat:"clay",king:"europe",ref:"Daniel 2:33, 41-43",
+  kjv:"\"His feet part of iron and part of clay... the kingdom shall be divided... they shall not cleave one to another, even as iron is not mixed with clay.\"",ptv:"\"Os pés eram em parte de ferro e em parte de barro... O reino será dividido, e eles não vão ficar unidos, assim como o ferro não se mistura com o barro.\""},
+ {id:"stone",p:6,pt:"PEDRA",en:"STONE",mat:"stone",king:"god",ref:"Daniel 2:34-35, 44-45",
+  kjv:"\"A stone was cut out without hands... the God of heaven set up a kingdom, which shall never be destroyed... and it shall stand for ever.\"",ptv:"\"Uma pedra se soltou sem que ninguém tocasse nela... O Deus do céu vai criar um reino que nunca será destruído, e ele vai durar para sempre.\""}
+];
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const S={lang:LS.get("d2r_lang","pt"),muted:LS.get("d2r_mute","0")==="1",screen:"title",level:"easy",ans:{},base:0,shown:0,t0:0,elapsed:0,sel:0,
+ step:null,pick:null,kingOrder:null,finale:null,typing:null,lastScore:null};
+const t=k=>T[S.lang][k];
+const nm=o=>o[S.lang];
+const $=id=>document.getElementById(id);
+
+/* ================= AUDIO (Web Audio chiptune) ================= */
+const AU={ctx:null,master:null,mus:null,sfx:null,noiseBuf:null,on:false,step:0,next:0,timer:null};
+const NOTE={C:0,"C#":1,Db:1,D:2,"D#":3,Eb:3,E:4,F:5,"F#":6,Gb:6,G:7,"G#":8,Ab:8,A:9,"A#":10,Bb:10,B:11};
+function hz(n){const m=n.match(/^([A-G][b#]?)(\d)$/);if(!m)return 0;const midi=(+m[2]+1)*12+NOTE[m[1]];return 440*Math.pow(2,(midi-69)/12)}
+function audioInit(){
+ try{
+  if(AU.ctx){if(AU.ctx.state==="suspended")AU.ctx.resume();return}
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  AU.ctx=new AC();
+  AU.master=AU.ctx.createGain();AU.master.gain.value=S.muted?0:1;AU.master.connect(AU.ctx.destination);
+  AU.mus=AU.ctx.createGain();AU.mus.gain.value=.16;AU.mus.connect(AU.master);
+  AU.sfx=AU.ctx.createGain();AU.sfx.gain.value=.32;AU.sfx.connect(AU.master);
+  const len=AU.ctx.sampleRate;AU.noiseBuf=AU.ctx.createBuffer(1,len,AU.ctx.sampleRate);
+  const d=AU.noiseBuf.getChannelData(0);for(let i=0;i<len;i++)d[i]=Math.random()*2-1;
+ }catch(e){AU.ctx=null}
+}
+function tone(type,f,t0,dur,vol,dest,f2){
+ if(!AU.ctx||!f)return;const c=AU.ctx,o=c.createOscillator(),g=c.createGain();
+ o.type=type;o.frequency.setValueAtTime(f,t0);if(f2)o.frequency.exponentialRampToValueAtTime(f2,t0+dur);
+ g.gain.setValueAtTime(0.0001,t0);g.gain.linearRampToValueAtTime(vol,t0+.006);
+ g.gain.setValueAtTime(vol,t0+Math.max(.007,dur*.6));g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+ o.connect(g);g.connect(dest||AU.sfx);o.start(t0);o.stop(t0+dur+.02);
+}
+function noise(t0,dur,vol,ff,ftype,dest,ff2){
+ if(!AU.ctx)return;const c=AU.ctx,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();
+ s.buffer=AU.noiseBuf;f.type=ftype||"highpass";f.frequency.setValueAtTime(ff||1000,t0);if(ff2)f.frequency.exponentialRampToValueAtTime(ff2,t0+dur);
+ g.gain.setValueAtTime(vol,t0);g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+ s.connect(f);f.connect(g);g.connect(dest||AU.sfx);s.start(t0,Math.random()*.5);s.stop(t0+dur+.02);
+}
+// Original melody in D Phrygian dominant ("ancient" scale). 8th-note steps, 2 sections x 8 bars.
+const LEAD=("D5 . A4 . Bb4 A4 G4 F#4 | G4 . F#4 Eb4 D4 - - . | D5 . A4 . Bb4 A4 G4 A4 | Bb4 . C5 Bb4 A4 - - . | "+
+ "A4 Bb4 C5 D5 Eb5 D5 C5 Bb4 | A4 . Bb4 A4 G4 F#4 G4 . | F#4 G4 A4 Bb4 A4 G4 F#4 Eb4 | D4 - - - . . . . | "+
+ "D4 F#4 A4 D5 - . C5 Bb4 | A4 - G4 - F#4 - Eb4 . | D4 F#4 A4 D5 - . Eb5 D5 | C5 - Bb4 - A4 - - . | "+
+ "G4 . Bb4 . D5 . C5 Bb4 | A4 . C5 . Eb5 . D5 C5 | Bb4 A4 G4 F#4 G4 A4 Bb4 C5 | D5 - - - - - . .").replace(/\|/g," ").trim().split(/\s+/);
+const BASS=["D","Eb","D","G","Bb","C","Eb","D","D","Eb","D","C","G","C","Eb","D"];
+const STEP=60/126/2;
+function schedStep(i,tm){
+ const tok=LEAD[i];
+ if(tok!=="."&&tok!=="-"){let n=1;while(LEAD[(i+n)%LEAD.length]==="-")n++;
+  tone("square",hz(tok),tm,STEP*n*.95,.22,AU.mus);
+  tone("square",hz(tok)*1.005,tm+STEP*.5,STEP*n*.6,.05,AU.mus);} // echo
+ const bar=Math.floor(i/8),b=i%8,root=BASS[bar];
+ const bn=[root+"2",null,root+"3",null,root+"2",root+"2",root+"3",null][b];
+ if(bn)tone("triangle",hz(bn),tm,STEP*.9,.5,AU.mus);
+ if(b===0||b===3||b===6)tone("triangle",150,tm,.16,.55,AU.mus,45); // war drum
+ if(b===4)noise(tm,.12,.35,1800,"highpass",AU.mus);
+ if(b%2===1)noise(tm,.03,.12,7000,"highpass",AU.mus);
+}
+function musicStart(){
+ if(!AU.ctx||AU.on)return;AU.on=true;AU.step=0;AU.next=AU.ctx.currentTime+.08;
+ AU.timer=setInterval(()=>{if(!AU.ctx)return;while(AU.next<AU.ctx.currentTime+.15){schedStep(AU.step,AU.next);AU.next+=STEP;AU.step=(AU.step+1)%LEAD.length}},25);
+}
+function musicStop(){AU.on=false;clearInterval(AU.timer);AU.timer=null}
+const now=()=>AU.ctx?AU.ctx.currentTime:0;
+const SFX={
+ blip(){const n=now();tone("square",988,n,.05,.25);tone("square",1318,n+.04,.05,.2)},
+ tick(){tone("triangle",1600+Math.random()*200,now(),.018,.12)},
+ deny(){tone("square",220,now(),.08,.2)},
+ correct(){const n=now();["C5","E5","G5","C6"].forEach((x,i)=>tone("square",hz(x),n+i*.07,.12,.25));tone("square",hz("E6"),n+.28,.25,.2)},
+ half(){const n=now();tone("square",hz("E5"),n,.1,.22);tone("square",hz("C5"),n+.1,.18,.2)},
+ wrong(){const n=now();tone("sawtooth",160,n,.32,.25,null,70);tone("square",110,n,.32,.15,null,55)},
+ crash(){const n=now();noise(n,1.1,.9,4000,"lowpass",null,120);tone("triangle",90,n,.6,.9,null,30);tone("square",60,n,.4,.3,null,25);noise(n+.15,.9,.4,2500,"bandpass",null,300)},
+ rumble(){const n=now();noise(n,1.6,.35,400,"lowpass",null,80)},
+ whoosh(){const n=now();noise(n,.6,.4,600,"bandpass",null,3000)},
+ fanfare(){const n=now(),q=.13;const seq=[["G4",0,1],["G4",1,1],["G4",2,1],["C5",3,3],["G4",6,1],["C5",7,1],["E5",8,3],["D5",11,1],["E5",12,1],["G5",13,6]];
+  seq.forEach(([x,s,d])=>{tone("square",hz(x),n+s*q,d*q*.95,.25);tone("square",hz(x)/2,n+s*q,d*q*.95,.1)});
+  tone("triangle",hz("C3"),n+3*q,3*q,.5);tone("triangle",hz("G2"),n+8*q,3*q,.5);tone("triangle",hz("C3"),n+13*q,6*q,.6);
+  [3,8,13].forEach(s=>noise(n+s*q,.25,.3,1500))}
+};
+function setMute(m){S.muted=m;LS.set("d2r_mute",m?"1":"0");if(AU.master)AU.master.gain.setTargetAtTime(m?0:1,AU.ctx.currentTime,.02);$("muteBtn").textContent=m?t("soundOff"):t("soundOn")}
+document.addEventListener("visibilitychange",()=>{if(!AU.ctx)return;if(document.hidden)AU.ctx.suspend();else AU.ctx.resume()});
+
+/* ================= PIXEL WORLD ================= */
+const W=192,H=176,CX=78,GROUND=161,SX=166,SY=50;
+const PART=new Uint8Array(W*H),DET=new Uint8Array(W*H),LVL=new Uint8Array(W*H),CLAY=new Uint8Array(W*H);
+function sp(x,y,p){if(x>=0&&y>=0&&x<W&&y<H)PART[y*W+x]=p}
+function sym(y0,y1,hw,p){for(let y=y0;y<=y1;y++)for(let x=CX-hw;x<CX+hw;x++)sp(x,y,p)}
+function symR(y0,y1,a,b,p){for(let y=y0;y<=y1;y++)for(let o=a;o<=b;o++){sp(CX+o,y,p);sp(CX-1-o,y,p)}}
+function dt(x,y,v){if(x>=0&&y>=0&&x<W&&y<H)DET[y*W+x]=v}
+function dS(o,y,v){dt(CX+o,y,v);dt(CX-1-o,y,v)}
+function buildStatue(){
+ // chest & arms (2)
+ sym(38,38,14,2);sym(39,39,17,2);sym(40,40,19,2);sym(41,47,20,2);sym(48,67,13,2);
+ symR(48,74,14,19,2);symR(75,75,15,18,2);
+ // belly & thighs (3)
+ sym(68,72,14,3);for(let y=73;y<=100;y++)sym(y,y,14+Math.floor((y-73)/12),3);
+ // legs (4)
+ symR(101,146,2,11,4);symR(110,126,12,12,4);symR(138,146,11,11,0);symR(138,146,2,2,0);
+ // feet (5)
+ symR(147,149,3,10,5);symR(150,150,2,12,5);symR(151,160,2,13,5);
+ // head (1) – drawn last
+ sym(21,35,10,1);symR(36,37,7,9,1);sym(10,11,8,1);sym(12,19,7,1);sym(20,20,8,1);
+ sym(29,31,7,1);sym(32,40,8,1);sym(41,43,6,1);sym(44,44,4,1);
+ // stone (6)
+ const rows=[[-3,3],[-5,5],[-7,6],[-8,7],[-8,8],[-9,8],[-9,8],[-9,9],[-8,9],[-8,8],[-7,8],[-6,7],[-4,5]];
+ rows.forEach(([a,b],i)=>{for(let x=SX+a;x<=SX+b;x++)sp(x,SY-6+i,6)});
+ // ---- details ----
+ for(let o=0;o<7;o++){dS(o,13,1);dS(o,17,1)}for(let o=0;o<8;o++)dS(o,11,1);
+ [1,4].forEach(o=>{dS(o,15,2)});dS(6,15,1);
+ for(let o=0;o<8;o++)dS(o,20,1);dS(0,20,2);
+ for(let y=21;y<=37;y++)for(let o=7;o<=9;o++)if((o+y)%3===0)dS(o,y,1);
+ for(let y=21;y<=28;y++)dS(6,y,1);
+ for(let o=1;o<=4;o++)dS(o,23,1);
+ dS(1,25,2);dS(4,25,2);dS(2,25,1);dS(3,25,1);
+ dt(CX,26,1);dt(CX,27,1);dt(CX,28,1);dt(CX-1,28,2);
+ for(let o=0;o<=4;o++)dS(o,29,1);
+ for(let y=32;y<=43;y++)for(let o=0;o<8;o++){if(y%3===0&&(o+y/3)%2===0)dS(o,y,1);if(y%3===1&&(o+(y-1)/3)%2===0)dS(o,y,2)}
+ for(let y=45;y<=53;y++)dt(CX,y,1);for(let o=1;o<=9;o++)dS(o,54,1);dS(10,53,1);dS(5,51,2);
+ for(let o=14;o<=19;o++){dS(o,62,1);if(o%2)dS(o,63,2)}
+ for(let o=15;o<=18;o++){dS(o,70,1);dS(o,73,1)}
+ for(let o=0;o<14;o++){dS(o,68,1);dS(o,72,1)}for(let y=69;y<=71;y++){dS(0,y,2);dS(1,y,2)}
+ dt(CX,78,1);
+ for(let y=74;y<=100;y++){const x=Math.round(CX+12-(y-74)*.85);dt(x,y,1);if(y%2===0)dt(x+1,y,1)}
+ for(let y=97;y<=100;y++)for(let x=CX-17;x<CX+17;x++)if(x%2===0)dt(x,y,1);
+ for(let o=5;o<=8;o++){dS(o,112,1);dS(o,111,2)}
+ for(let y=156;y<=160;y++)[5,8,11].forEach(o=>dS(o,y,1));for(let o=3;o<=10;o++)dS(o,151,1);
+ dt(SX-3,46,1);dt(SX-2,47,1);dt(SX-2,48,1);dt(SX-1,49,1);dt(SX+3,52,1);dt(SX+4,53,1);dt(SX+2,44,2);dt(SX-5,47,2);
+ // levels with ordered dithering
+ const B4=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+ for(let y=0;y<H;y++){let x=0;while(x<W){const p=PART[y*W+x];if(!p){x++;continue}
+   let e=x;while(e<W&&PART[y*W+e]===p)e++;const wd=e-x;
+   for(let k=x;k<e;k++){const tt=(k-x+.5)/wd;let f=1-Math.abs(tt-.3)*1.45;if(p===6)f-=(y-(SY-6))*.012;
+     const b=(B4[(y%4)*4+(k%4)]+.5)/16;let l=Math.floor(f*3+b);l=l<0?0:l>3?3:l;
+     const i=y*W+k;if(y>0&&PART[i-W]&&PART[i-W]!==p)l=0;if(DET[i]===1)l=0;if(DET[i]===2)l=3;if(k===x||k===e-1)l=Math.min(l,1);LVL[i]=l}
+   x=e}}
+ // clay blobs (value noise)
+ const hs=(a,b)=>{let h=a*374761393+b*668265263;h=(h^(h>>13))*1274126177;return ((h^(h>>16))>>>0)/4294967295};
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const gx=x/4,gy=y/4,ix=Math.floor(gx),iy=Math.floor(gy),fx=gx-ix,fy=gy-iy;
+  const v=hs(ix,iy)*(1-fx)*(1-fy)+hs(ix+1,iy)*fx*(1-fy)+hs(ix,iy+1)*(1-fx)*fy+hs(ix+1,iy+1)*fx*fy;CLAY[y*W+x]=v>.5?1:0}
+}
+buildStatue();
+const PIX={1:[],2:[],3:[],4:[],5:[],6:[]},BOUND={},OUTL={};
+for(let i=0;i<W*H;i++)if(PART[i])PIX[PART[i]].push(i);
+for(let p=1;p<=6;p++){let t0=H,t1=0;const ol=new Set();for(const i of PIX[p]){const y=(i/W)|0,x=i%W;if(y<t0)t0=y;if(y>t1)t1=y;
+  for(const[dx,dy]of[[1,0],[-1,0],[0,1],[0,-1]]){const j=(y+dy)*W+x+dx;if(PART[j]!==p)ol.add(j)}}BOUND[p]=[t0,t1];OUTL[p]=[...ol]}
+const OUTLINE=[];for(let i=0;i<W*H;i++){if(PART[i])continue;const x=i%W;if((x>0&&PART[i-1])||(x<W-1&&PART[i+1])||PART[i-W]||PART[i+W])OUTLINE.push(i)}
+function rgb(h){const n=parseInt(h.slice(1),16);return (255<<24)|((n&255)<<16)|(n&0xff00)|((n>>16)&255)}
+const PALU={};MATS.forEach(m=>{PALU[m.id]=m.pal.map(rgb);if(m.pal2)PALU.clay2=m.pal2.map(rgb)});PALU.grey=GREY.map(rgb);
+function colorOf(i,mat){const l=LVL[i];if(mat==="clay"&&CLAY[i])return PALU.clay2[l];return PALU[mat][l]}
+
+const cv=$("cv"),cx=cv.getContext("2d"),img=cx.createImageData(W,H),BUF=new Uint32Array(img.data.buffer),BG=new Uint32Array(W*H);
+function bakeBG(){
+ const sky=["#0c0a24","#151036","#211748","#331d58","#4a2560","#682f5e","#8a3c55","#b0554c"].map(rgb);
+ const B4=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+ for(let y=0;y<H;y++){const f=Math.min(1,y/(GROUND-4))*(sky.length-1);for(let x=0;x<W;x++){const b=(B4[(y%4)*4+x%4]+.5)/16;BG[y*W+x]=sky[Math.min(sky.length-1,Math.floor(f+b-.5+.5))]}}
+ let s=7;const rnd=()=>{s=(s*16807)%2147483647;return s/2147483647};
+ for(let k=0;k<70;k++){const x=(rnd()*W)|0,y=(rnd()*95)|0;BG[y*W+x]=rgb(rnd()<.25?"#ffe9a8":"#cfd6ff")}
+ // moon
+ for(let y=-6;y<=6;y++)for(let x=-6;x<=6;x++){if(x*x+y*y<=36){const sh=(x+2)*(x+2)+(y-1)*(y-1)<=20;BG[(18+y)*W+30+x]=rgb(sh?"#f6e7b4":"#fff8dc")}}
+ // ziggurat (Babylon) silhouette
+ const zc=rgb("#2a1638"),zl=rgb("#3a1f4a");
+ [[4,40,150],[9,35,141],[14,30,132],[18,26,124]].forEach(([a,b,top])=>{for(let y=top;y<GROUND;y++)for(let x=a;x<=b;x++)BG[y*W+x]=(x===a?zl:zc)});
+ for(let y=124;y<GROUND;y++)BG[y*W+22]=zl;
+ // palms
+ const palm=rgb("#1d0f28");[[48,128],[118,134]].forEach(([px,py])=>{for(let y=py;y<GROUND;y++)BG[y*W+px+((y-py)>10?1:0)]=palm;
+  for(let k=-8;k<=8;k++){const yy=py+Math.round(Math.abs(k)*.45)+(Math.abs(k)>5?1:0);BG[yy*W+px+k]=palm;BG[(yy+1)*W+px+k+(k>0?1:-1)]=palm}});
+ // mountain (where the stone is cut out)
+ const m1=rgb("#3b2a4a"),m2=rgb("#2a1d38"),m3=rgb("#4d3a5c");
+ for(let y=52;y<GROUND;y++){const hw=(y-52)*0.62+6;for(let x=Math.floor(SX-hw-2);x<=Math.ceil(SX+hw);x++){if(x<0||x>=W)continue;const rel=(x-(SX-hw))/(2*hw);BG[y*W+x]=rel<.35?m3:((x+y)%2&&rel<.45?m3:(rel>.75?m2:m1))}}
+ for(let y=56;y<62;y++)for(let x=SX-5;x<=SX+5;x++)if(Math.abs(x-SX)<=y-55)BG[y*W+x]=m2; // the cut
+ // ground
+ const g=["#5a3a22","#3f2716","#2a1a0e"].map(rgb);
+ for(let y=GROUND;y<H;y++)for(let x=0;x<W;x++){const r=(y-GROUND)/(H-GROUND);BG[y*W+x]=g[r<.3?0:((x+y)%2&&r<.55)?0:(r<.75?1:((x+y)%2?1:2))]}
+ for(let x=0;x<W;x+=7)BG[(GROUND+2)*W+x]=rgb("#7a5233");
+}
+bakeBG();
+const OUTC=rgb("#0b0610"),HILC=rgb("#ffe14d"),WHITE=rgb("#ffffff");
+let sparks=[],debris=[];
+function sparkle(p){for(let k=0;k<16;k++){const i=PIX[p][(Math.random()*PIX[p].length)|0];sparks.push({x:i%W,y:(i/W)|0,t:performance.now()+k*45,life:600})}}
+function put(x,y,c){x=Math.round(x);y=Math.round(y);if(x>=0&&y>=0&&x<W&&y<H)BUF[y*W+x]=c}
+function render(ts){
+ BUF.set(BG);
+ const F=S.finale,fin=!!F;
+ const crum=fin&&F.ph>=2;
+ if(!crum){for(const i of OUTLINE){const ok=fin?PART[i]!==6:true;if(ok&&!(fin&&isStoneNbr(i)))BUF[i]=OUTC}}
+ for(let p=1;p<=6;p++){
+  if(crum&&p<6)continue;
+  const a=S.ans[p],arr=PIX[p];let ox=0,oy=0;
+  if(p===6&&fin){ox=F.sx-SX;oy=F.sy-SY}
+  const[b0,b1]=BOUND[p];let rev=1;if(a&&a.t){rev=Math.min(1,(ts-a.t)/650)}
+  const lim=b0+(b1-b0+1)*rev;
+  for(const i of arr){const y=(i/W)|0,x=i%W;const c=(a&&y<lim)?colorOf(i,a.mat):PALU.grey[LVL[i]];
+   if(ox||oy){put(x+ox,y+oy,c)}else BUF[i]=c}
+  if(p===6&&fin&&(ox||oy)){for(const i of OUTL[6]){if(PART[i]===6)continue;put(i%W+ox,((i/W)|0)+oy,OUTC)}}
+ }
+ // selection blink
+ if(S.screen==="play"&&S.step&&!fin&&Math.floor(ts/260)%2===0){for(const i of OUTL[S.sel])if(!PART[i]||PART[i]!==S.sel)BUF[i]=HILC}
+ // sparkles
+ sparks=sparks.filter(s=>ts<s.t+s.life);for(const s of sparks){const k=(ts-s.t)/s.life;if(k<0)continue;const r=k<.5?Math.round(k*6):Math.round((1-k)*6);
+  put(s.x,s.y,WHITE);for(let d=1;d<=r;d++){const c=d===r?HILC:WHITE;put(s.x+d,s.y,c);put(s.x-d,s.y,c);put(s.x,s.y+d,c);put(s.x,s.y-d,c)}}
+ if(fin)renderFinale(ts);
+ cx.putImageData(img,0,0);
+}
+function isStoneNbr(i){const x=i%W;return PART[i+1]===6||PART[i-1]===6||PART[i+W]===6||PART[i-W]===6}
+
+/* ================= FINALE ================= */
+function startFinale(){
+ S.screen="finale";S.step=null;closeDlg();musicStop();
+ S.finale={t0:performance.now(),ph:0,sx:SX,sy:SY,mh:0,cap:""};$("skip").style.display="block";$("skip").textContent=t("skip");
+ SFX.whoosh();
+}
+function renderFinale(ts){
+ const F=S.finale,e=(ts-F.t0)/1000;
+ // phase 0: flight
+ if(e<1){const p=Math.min(1,e/1),sx=SX,sy=SY,tx=CX+1,ty=GROUND-8;F.sx=Math.round(sx+(tx-sx)*p);F.sy=Math.round(sy+(ty-sy)*p-Math.sin(Math.PI*p)*34);
+  for(let k=1;k<6;k++){const q=Math.max(0,p-k*.04);put(sx+(tx-sx)*q,sy+(ty-sy)*q-Math.sin(Math.PI*q)*34,k%2?HILC:WHITE)}}
+ else if(F.ph===0){F.ph=1;F.sx=CX+1;F.sy=GROUND-8;SFX.crash();shake();caption(t("smash"));
+  for(const i of PIX[5])debris.push(mkDeb(i,0))}
+ if(e>1.15&&F.ph===1){F.ph=2;SFX.rumble();for(let p=1;p<=4;p++)for(const i of PIX[p])debris.push(mkDeb(i,(GROUND-((i/W)|0))*.011))}
+ if(e>3.1&&F.ph===2){F.ph=3;caption(t("chaff"))}
+ if(e>4.3&&F.ph===3){F.ph=4;SFX.fanfare();caption(t("mountain"))}
+ if(e>8.6&&F.ph===4){F.ph=5;showResults()}
+ // debris
+ const dtm=1/60;for(const d of debris){if(e<1+d.del)continue;
+  if(e>3.1){d.vx+=.05+Math.random()*.03;d.vy-=.012;d.a-=.006}
+  d.vy+=.09;d.x+=d.vx;d.y+=d.vy;if(d.y>GROUND-1+d.fl&&e<3.1){d.y=GROUND-1+d.fl;d.vy*=-.25;d.vx*=.6}
+  if(d.a>0&&(d.a>.5||Math.random()<d.a*2))put(d.x,d.y,d.c)}
+ if(e<3.1&&F.ph>=2){/* nothing */}
+ // mountain growth
+ if(e>4.3){const p=Math.min(1,(e-4.3)/2.6),ease=1-Math.pow(1-p,3),h=10+ease*150,base=GROUND,peak=base-h,pal=PALU.stone,B4=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+  for(let y=Math.max(0,Math.floor(peak));y<H;y++){const hw=(y-peak)*1.15+3;for(let x=Math.max(0,Math.floor(CX-hw));x<=Math.min(W-1,CX+hw);x++){
+   const rel=(x-(CX-hw))/(2*hw+1);let f=1-Math.abs(rel-.3)*1.5-(y>base?.3:0);const b=(B4[(y%4)*4+x%4]+.5)/16;let l=Math.floor(f*3+b);l=l<0?0:l>3?3:l;
+   if(Math.abs(x-(CX-hw))<1||Math.abs(x-(CX+hw))<1)l=0;BUF[y*W+x]=pal[l]}}
+  if(p>=1&&Math.floor(ts/200)%2){for(let k=0;k<8;k++){const a=k/8*Math.PI*2+ts/900;put(CX+Math.cos(a)*30,peak+40+Math.sin(a)*18,HILC)}}}
+}
+function mkDeb(i,del){const a=S.ans[PART[i]];return{x:i%W,y:(i/W)|0,vx:(Math.random()-.5)*1.6,vy:-Math.random()*1.8,c:a?colorOf(i,a.mat):PALU.grey[LVL[i]],del,a:1,fl:Math.floor(Math.random()*12)}}
+function shake(){const s=$("stage");s.classList.remove("shake");void s.offsetWidth;s.classList.add("shake")}
+function caption(txt){const c=$("cap");c.style.display=txt?"block":"none";c.textContent=txt}
+function skipFinale(){if(!S.finale||S.finale.ph>=5)return;S.finale.ph=5;SFX.blip();showResults()}
+
+/* ================= GAME ================= */
+function fmt(s){s=Math.floor(s);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
+const mult=()=>S.level==="hard"?1.5:1;
+function newGame(level){
+ S.level=level;S.ans={};S.base=0;S.shown=0;S.t0=performance.now();S.elapsed=0;S.screen="play";S.step=null;S.sel=1;S.finale=null;debris=[];sparks=[];
+ caption("");$("skip").style.display="none";$("results").classList.remove("show");$("title").classList.remove("show");
+ renderParts();updHud();if(!AU.on)musicStart();
+}
+function correctCount(){let c=0;for(const k in S.ans){c+=S.ans[k].mOk+S.ans[k].kOk}return c}
+function updHud(){$("hScore").textContent=String(Math.round(S.shown)).padStart(4,"0");$("hTime").textContent=fmt(S.elapsed);$("hParts").textContent=Object.keys(S.ans).length+"/6";
+ $("hint").style.display=(S.screen==="play"&&!S.step&&Object.keys(S.ans).length===0)?"block":"none"}
+function renderParts(){
+ const el=$("parts");el.innerHTML="";
+ PARTS.forEach((P,k)=>{const b=document.createElement("button");b.className="partb";const a=S.ans[P.p];
+  if(a){const n=a.mOk+a.kOk;b.classList.add(n===2?"ok":n===1?"half":"bad")}else if(S.step&&S.sel===P.p)b.classList.add("sel");
+  b.innerHTML=(k+1)+". "+nm(P)+(a?"<small>"+(a.mOk+a.kOk)+"/2</small>":"");b.onclick=()=>{audioInit();pickPart(P.p)};el.appendChild(b)});
+}
+function pickPart(p){
+ if(S.screen!=="play")return;
+ if(S.ans[p]){SFX.deny();flashHint(t("done"));return}
+ S.sel=p;S.step="mat";S.pick={};S.kingOrder=KINGS.map(k=>k.id).sort(()=>Math.random()-.5);SFX.blip();openDlg();renderParts();updHud();
+}
+let hintTimer;function flashHint(txt){const h=$("hint");h.textContent=txt;h.style.display="block";clearTimeout(hintTimer);hintTimer=setTimeout(()=>{h.textContent=t("hint");updHud()},1400)}
+/* swatch images */
+const SWIMG={};function makeSwatches(){const c=document.createElement("canvas");c.width=c.height=12;const g=c.getContext("2d"),B=[0,2,3,1];
+ MATS.forEach(m=>{for(let y=0;y<12;y++)for(let x=0;x<12;x++){let f=1-((x+y)/22);const b=(B[(y%2)*2+x%2]+.5)/4;let l=Math.max(0,Math.min(3,Math.floor(f*3+b)));
+   if((x===2&&y===2)||(x===3&&y===2)||(x===2&&y===3))l=3;let pal=m.pal;if(m.id==="clay"&&((Math.sin(x*1.3)+Math.cos(y*1.1+x*.4))>.4))pal=m.pal2;g.fillStyle=pal[l];g.fillRect(x,y,1,1)}
+  SWIMG[m.id]=c.toDataURL()})}
+makeSwatches();
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]))}
+function openDlg(){$("dlg").classList.add("show");renderDlg()}
+function closeDlg(){$("dlg").classList.remove("show");if(S.typing){clearInterval(S.typing.iv);S.typing=null}}
+function renderDlg(){
+ const P=PARTS.find(x=>x.p===S.sel),box=$("dlgBox");
+ if(S.step==="mat"){
+  box.innerHTML=`<h2>► ${esc(nm(P))}</h2><h3>1/2 · ${t("step1")}</h3><div class="grid3">${MATS.map((m,i)=>`<button class="sw" data-m="${m.id}"><img alt="" src="${SWIMG[m.id]}"><span>${i+1}. ${esc(nm(m))}</span></button>`).join("")}</div>
+   <div class="row"><button class="pbtn" id="dBack">${t("close")}</button></div>`;
+  box.querySelectorAll(".sw").forEach(b=>b.onclick=()=>chooseMat(b.dataset.m));$("dBack").onclick=()=>{SFX.blip();cancelDlg()};
+  setTimeout(()=>{const f=box.querySelector(".sw");f&&f.focus({preventScroll:true})},30);
+ }else if(S.step==="king"){
+  const m=MATS.find(x=>x.id===S.pick.mat);
+  const chip=`<span class="matchip"><img alt="" src="${SWIMG[m.id]}">${esc(nm(m))}</span>`;
+  if(S.level==="easy"){
+   box.innerHTML=`<h2>► ${esc(nm(P))} · ${chip}</h2><h3>2/2 · ${t("step2")}</h3><div class="grid2">${S.kingOrder.map((id,i)=>{const k=KINGS.find(x=>x.id===id);return `<button class="choice" data-k="${id}"><span class="k">${i+1}.</span> ${esc(nm(k))}</button>`}).join("")}</div>
+    <div class="row"><button class="pbtn" id="dBack">${t("back")}</button></div>`;
+   box.querySelectorAll(".choice").forEach(b=>b.onclick=()=>submit(b.dataset.k,null));
+   setTimeout(()=>{const f=box.querySelector(".choice");f&&f.focus({preventScroll:true})},30);
+  }else{
+   box.innerHTML=`<h2>► ${esc(nm(P))} · ${chip}</h2><h3>2/2 · ${t("step2")}</h3>
+    <input class="tx" id="kIn" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="${esc(t("typeHint"))}" value="${esc(S.pick.typed||"")}" maxlength="40">
+    <div class="row"><button class="pbtn" id="dBack">${t("back")}</button><button class="pbtn" id="kOk" style="background:#1d6b2a">${t("ok")}</button></div>`;
+   const inp=$("kIn");inp.oninput=()=>{S.pick.typed=inp.value;SFX.tick()};
+   inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();hardSubmit()}e.stopPropagation()};
+   $("kOk").onclick=hardSubmit;setTimeout(()=>inp.focus(),60);
+  }
+  $("dBack").onclick=()=>{SFX.blip();S.step="mat";renderDlg()};
+ }else if(S.step==="fb"){renderFeedback(false)}
+}
+function cancelDlg(){S.step=null;closeDlg();renderParts();updHud()}
+function chooseMat(id){SFX.blip();S.pick.mat=id;S.step="king";renderDlg()}
+function norm(s){return(" "+String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim()+" ")}
+function lev(a,b){const m=a.length,n=b.length;if(Math.abs(m-n)>2)return 9;let d=Array.from({length:n+1},(_,j)=>j);for(let i=1;i<=m;i++){let pr=d[0];d[0]=i;for(let j=1;j<=n;j++){const tmp=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,pr+(a[i-1]===b[j-1]?0:1));pr=tmp}}return d[n]}
+function matchKing(input){
+ const s=norm(input);if(s.trim()==="")return null;let best=null,bl=0;
+ for(const k of KINGS)for(const a of k.al){const an=norm(a);if(s.includes(an)&&an.length>bl){best=k.id;bl=an.length}}
+ if(best)return best;
+ const st=s.trim();let bd=9;for(const k of KINGS)for(const a of k.al){const an=norm(a).trim();if(an.length<5)continue;const d=lev(st,an);const tol=an.length>=9?2:1;if(d<=tol&&d<bd){bd=d;best=k.id}}
+ return best;
+}
+function hardSubmit(){const inp=$("kIn");const v=inp?inp.value:"";if(!v.trim()){SFX.deny();inp.classList.remove("shake");void inp.offsetWidth;inp.classList.add("shake");inp.placeholder=t("empty");return}
+ submit(matchKing(v),v.trim())}
+function submit(kid,typed){
+ const P=PARTS.find(x=>x.p===S.sel);
+ const mOk=S.pick.mat===P.mat?1:0,kOk=kid===P.king?1:0;
+ S.ans[P.p]={mat:S.pick.mat,king:kid,typed,mOk,kOk,t:performance.now()};
+ S.base+=(mOk+kOk)*100*mult();
+ if(Object.keys(S.ans).length===6)S.elapsed=(performance.now()-S.t0)/1000;
+ sparkle(P.p);(mOk&&kOk?SFX.correct:(mOk||kOk)?SFX.half:SFX.wrong)();
+ S.step="fb";renderParts();updHud();renderFeedback(true);
+}
+function fbSegments(){
+ const P=PARTS.find(x=>x.p===S.sel),a=S.ans[P.p],mc=MATS.find(x=>x.id===P.mat),mp=MATS.find(x=>x.id===a.mat),kc=KINGS.find(x=>x.id===P.king);
+ const kp=a.king?KINGS.find(x=>x.id===a.king):null;const segs=[];const L=(txt,c)=>segs.push([txt,c]);
+ L(t("material")+": ","w");if(a.mOk){L(nm(mc)+" ✓ "+t("correct")+"\n","g")}else{L(nm(mp)+" ✗ "+t("wrong")+"\n","r");L("  "+t("answer")+" "+nm(mc)+"\n","y")}
+ L(t("kingdom")+": ","w");
+ const yours=S.level==="hard"?(a.typed||"")+(kp&&!a.kOk?" ("+nm(kp)+")":""):(kp?nm(kp):"?");
+ if(a.kOk){L(nm(kc)+" ✓ "+t("correct")+"\n","g")}else{L(yours+" ✗ "+t("wrong")+"\n","r");L("  "+t("answer")+" "+nm(kc)+"\n","y")}
+ L("+"+Math.round((a.mOk+a.kOk)*100*mult())+" "+t("pts")+"\n\n","c");
+ L("📖 "+P.ref+"\n","y");L(S.lang==="pt"?P.ptv:P.kjv,"dim");return segs;
+}
+function renderFeedback(animate){
+ const P=PARTS.find(x=>x.p===S.sel),box=$("dlgBox");if(S.typing){clearInterval(S.typing.iv);S.typing=null}
+ box.innerHTML=`<h2>► ${esc(nm(P))}</h2><div class="typer" id="typer"></div><div class="row"><span></span><button class="pbtn" id="fbGo">${t("cont")}</button></div>`;
+ const segs=fbSegments(),ty=$("typer"),spans=segs.map(([tx,c])=>{const s=document.createElement("span");s.className=c;ty.appendChild(s);return s});
+ const cur=document.createElement("span");cur.className="cursor";ty.appendChild(cur);
+ const finish=()=>{segs.forEach(([tx],i)=>spans[i].textContent=tx);cur.remove();if(S.typing){clearInterval(S.typing.iv);S.typing=null}};
+ if(!animate){finish()}else{let si=0,ci=0,n=0;S.typing={iv:setInterval(()=>{for(let r=0;r<2;r++){if(si>=segs.length){finish();return}const tx=segs[si][0];ci++;spans[si].textContent=tx.slice(0,ci);if(ci>=tx.length){si++;ci=0}}
+   if(++n%3===0)SFX.tick()},22),finish}}
+ ty.onclick=()=>{if(S.typing)S.typing.finish()};
+ $("fbGo").onclick=fbContinue;setTimeout(()=>$("fbGo")&&$("fbGo").focus({preventScroll:true}),40);
+}
+function fbContinue(){
+ if(S.typing){S.typing.finish();return}
+ SFX.blip();S.step=null;closeDlg();renderParts();updHud();
+ if(Object.keys(S.ans).length===6)setTimeout(startFinale,450);
+ else{const nx=PARTS.find(x=>!S.ans[x.p]);if(nx)S.sel=nx.p}
+}
+/* ================= RESULTS ================= */
+function showResults(){
+ S.screen="results";$("skip").style.display="none";
+ const corr=correctCount(),T_=S.level==="hard"?300:180,bonus=Math.round(300*Math.max(0,1-S.elapsed/T_)*(corr/12));
+ const total=Math.round((corr*100+bonus)*mult()),max=Math.round(1500*mult());
+ const key="d2r_hs_"+S.level,prev=+LS.get(key,"0");const rec=total>prev;if(rec)LS.set(key,String(total));
+ S.lastScore={corr,bonus,total,max,rec,best:Math.max(prev,total)};S.shown=total;updHud();
+ const r=total/max,stars=r>=.8?3:r>=.55?2:r>=.25?1:0;S.lastScore.stars=stars;
+ renderResults();$("results").classList.add("show");
+ setTimeout(()=>{if(S.screen==="results")musicStart()},2600);
+ setTimeout(()=>{const b=$("rAgain");b&&b.focus({preventScroll:true})},50);
+}
+function renderResults(){
+ const L=S.lastScore;if(!L)return;
+ $("resBox").innerHTML=`<h2 style="text-align:center">★ ${t("results")} ★</h2>
+ <div class="stars" style="text-align:center">${[0,1,2].map(i=>i<L.stars?"★":"<span class='off'>★</span>").join("")}</div>
+ <table class="res"><tr><td>${t("level")}</td><td>${t(S.level)}</td></tr>
+ <tr><td>${t("correctN")}</td><td>${L.corr}/12</td></tr><tr><td>${t("time")}</td><td>${fmt(S.elapsed)}</td></tr>
+ <tr><td>${t("base")}</td><td>${L.corr*100}</td></tr><tr><td>${t("speed")}</td><td>+${L.bonus}</td></tr>
+ ${S.level==="hard"?`<tr><td>${t("mult")}</td><td>x1.5</td></tr>`:""}
+ <tr><td style="color:#fff;font-size:18px;padding-top:8px">${t("total")}</td><td style="font-size:22px;padding-top:8px">${L.total}</td></tr>
+ <tr><td>${t("best")}</td><td>${L.best}</td></tr></table>
+ ${L.rec?`<p class="newrec" style="text-align:center;font-size:16px">${t("newRec")}</p>`:""}
+ <p style="font-size:13px;color:#cfd6ff;text-align:center;line-height:1.8">${t("finalMsg")}</p>
+ <div class="lvl"><button class="choice" id="rAgain">► ${t("again")}</button><button class="choice" id="rChange" style="background:#5a2a8a">${t("change")}</button></div>`;
+ $("rAgain").onclick=()=>{SFX.blip();newGame(S.level)};$("rChange").onclick=()=>{SFX.blip();$("results").classList.remove("show");showTitle(true)};
+}
+/* ================= TITLE ================= */
+let titleStage=0;
+function showTitle(levelSel){
+ S.screen="title";S.step=null;S.finale=null;S.ans={};S.base=0;S.shown=0;S.elapsed=0;debris=[];caption("");$("skip").style.display="none";
+ titleStage=levelSel?1:0;renderTitle();$("title").classList.add("show");renderParts();updHud();
+}
+function renderTitle(){
+ const hsE=LS.get("d2r_hs_easy","0"),hsH=LS.get("d2r_hs_hard","0");
+ $("titleBox").innerHTML=`<div class="logo">${esc(t("title"))}<small>${t("sub")}</small></div>`+(titleStage===0?
+  `<button class="press" id="pressBtn">► ${t("press")} ◄</button><div style="font-size:12px;color:#9fd3ff">${t("tapToStart")}</div>`:
+  `<h2 style="text-align:center">${t("chooseLevel")}</h2><div class="lvl">
+   <button class="choice" id="lvE">${t("easy")}<small>${t("easyDesc")}<br>${t("best")}: ${hsE}</small></button>
+   <button class="choice" id="lvH" style="background:#8a1d1d;box-shadow:inset -3px -3px 0 #4a0b0b,inset 3px 3px 0 #e05555,0 0 0 2px #000">${t("hard")}<small>${t("hardDesc")}<br>${t("best")}: ${hsH}</small></button></div>
+   <div class="how">${t("how")}<br><br>${t("keys")}</div>`);
+ if(titleStage===0){$("pressBtn").onclick=pressStart;setTimeout(()=>$("pressBtn")&&$("pressBtn").focus({preventScroll:true}),30)}
+ else{$("lvE").onclick=()=>{SFX.blip();newGame("easy")};$("lvH").onclick=()=>{SFX.blip();newGame("hard")};setTimeout(()=>$("lvE")&&$("lvE").focus({preventScroll:true}),30)}
+}
+function pressStart(){audioInit();musicStart();SFX.blip();titleStage=1;renderTitle()}
+$("title").addEventListener("click",e=>{if(titleStage===0&&e.target.id!=="pressBtn")pressStart()});
+
+/* ================= I18N APPLY ================= */
+function applyLang(){
+ document.documentElement.lang=S.lang==="pt"?"pt-BR":"en";document.title=S.lang==="pt"?"Monte a Estátua de Daniel (Retrô)":"Build Daniel's Statue (Retro)";
+ $("langBtn").textContent=S.lang==="pt"?"PT|en":"EN|pt";$("tTitle").textContent=t("title");$("lScore").textContent=t("score");$("lTime").textContent=t("time");$("lParts").textContent=t("parts");
+ $("hint").textContent=t("hint");$("foot").textContent=t("foot");$("skip").textContent=t("skip");setMute(S.muted);
+ renderParts();if($("title").classList.contains("show"))renderTitle();if($("dlg").classList.contains("show"))renderDlg();if($("results").classList.contains("show"))renderResults();
+ if(S.finale&&S.finale.ph<5){const ph=S.finale.ph;caption(ph>=4?t("mountain"):ph>=3?t("chaff"):ph>=1?t("smash"):"")}
+}
+$("langBtn").onclick=()=>{audioInit();S.lang=S.lang==="pt"?"en":"pt";LS.set("d2r_lang",S.lang);SFX.blip();applyLang()};
+$("muteBtn").onclick=()=>{audioInit();setMute(!S.muted);if(!S.muted)SFX.blip();if(S.screen!=="finale"&&!AU.on)musicStart()};
+$("skip").onclick=skipFinale;
+document.addEventListener("pointerdown",()=>audioInit(),{once:false,passive:true});
+
+/* ================= INPUT ================= */
+cv.addEventListener("pointerdown",e=>{
+ audioInit();if(S.screen!=="play"||S.step)return;
+ const r=cv.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/r.width*W),y=Math.floor((e.clientY-r.top)/r.height*H);
+ let best=0,bd=99;for(let dy=-5;dy<=5;dy++)for(let dx=-5;dx<=5;dx++){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=W||yy>=H)continue;const p=PART[yy*W+xx];if(p){const d=dx*dx+dy*dy;if(d<bd){bd=d;best=p}}}
+ if(best)pickPart(best);
+});
+document.addEventListener("keydown",e=>{
+ audioInit();const k=e.key;
+ if(S.screen==="title"&&titleStage===0&&(k==="Enter"||k===" ")){e.preventDefault();pressStart();return}
+ if(S.screen==="finale"&&(k==="Enter"||k===" "||k==="Escape")){e.preventDefault();skipFinale();return}
+ if(S.screen!=="play")return;
+ if(!S.step){
+  const open=PARTS.filter(p=>!S.ans[p.p]).map(p=>p.p);if(!open.length)return;
+  if(["ArrowRight","ArrowDown","ArrowLeft","ArrowUp"].includes(k)){e.preventDefault();let i=open.indexOf(S.sel);if(i<0)i=0;else i=(i+((k==="ArrowRight"||k==="ArrowDown")?1:open.length-1))%open.length;S.sel=open[i];SFX.tick();
+   const bs=$("parts").querySelectorAll(".partb");bs[S.sel-1]&&bs[S.sel-1].focus();return}
+  if(/^[1-6]$/.test(k)){pickPart(+k);return}
+  return;
+ }
+ if(k==="Escape"){if(S.step==="mat")cancelDlg();else if(S.step==="king"){S.step="mat";renderDlg()}else fbContinue();return}
+ if(S.step==="mat"&&/^[1-6]$/.test(k)){chooseMat(MATS[+k-1].id);return}
+ if(S.step==="king"&&S.level==="easy"&&/^[1-6]$/.test(k)){submit(S.kingOrder[+k-1],null);return}
+});
+/* ================= LOOP ================= */
+function loop(ts){
+ if(S.screen==="play"&&Object.keys(S.ans).length<6)S.elapsed=(performance.now()-S.t0)/1000;
+ if(S.shown<S.base&&S.screen==="play")S.shown=Math.min(S.base,S.shown+Math.max(2,(S.base-S.shown)*.12));
+ if(S.screen==="play")updHud();
+ render(ts);requestAnimationFrame(loop);
+}
+applyLang();showTitle(false);requestAnimationFrame(loop);
+// test hook
+window.__D2R={S,PARTS,MATS,KINGS,matchKing,newGame,pickPart,chooseMat,submit,fbContinue,skipFinale};
+</script>
+</body>
+</html>
