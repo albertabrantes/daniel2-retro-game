@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Monte a Estátua de Daniel · Build Daniel's Statue (Retro)</title>
 <meta name="description" content="Retro pixel game: build the statue of Daniel 2 / Jogo retrô: monte a estátua de Daniel 2">
 <meta name="theme-color" content="#0a0814">
@@ -15,7 +15,7 @@
 html,body{margin:0;padding:0;background:#0a0814;color:#fff;font-family:'Tiny5','Press Start 2P',monospace;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 body{min-height:100vh;display:flex;justify-content:center;
  background:#0a0814 repeating-linear-gradient(0deg,rgba(255,255,255,.015) 0 2px,transparent 2px 4px)}
-#app{width:100%;max-width:520px;position:relative;padding:6px 6px 14px}
+#app{width:100%;max-width:520px;position:relative;padding:6px 6px 14px;padding:max(6px,env(safe-area-inset-top)) max(6px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left))}
 button{font-family:inherit;cursor:pointer;color:#fff}
 .top{position:relative;z-index:30;display:flex;align-items:center;gap:6px;margin-bottom:6px}
 .top .ttl{flex:1;font-size:14px;line-height:1.5;color:#ffd84a;text-shadow:2px 2px 0 #7a2a00;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
@@ -78,13 +78,14 @@ input.tx:focus{border-color:#ffe14d}
 .lvl .choice small{display:block;font-size:12px;color:#cfd6ff;margin-top:6px;line-height:1.6}
 .how{font-size:14px;color:#cfd6ff;line-height:1.8;margin-top:12px;text-align:left}
 .stars{font-size:22px;color:#ffe14d;letter-spacing:6px;text-shadow:3px 3px 0 #000;margin:8px 0}
-.stars .off{color:#3a3a55}
+.stars .off{color:#8f8fc4}
 .res td{padding:3px 0;font-size:15px}.res td:last-child{text-align:right;color:#ffe14d}
 .res{width:100%;border-collapse:collapse}
 #cap{position:absolute;left:4px;right:4px;top:6px;text-align:center;font-size:14px;line-height:1.7;color:#fff;text-shadow:2px 2px 0 #000,-1px -1px 0 #000;pointer-events:none;display:none;background:rgba(0,0,0,.45);padding:6px}
 #skip{position:absolute;right:6px;bottom:6px;display:none;font-size:14px;line-height:1}
 .newrec{color:#6dff7a;animation:blink .7s steps(2) infinite}
-.foot{font-size:12px;color:#6c6a8a;text-align:center;margin-top:14px;line-height:1.7}
+.foot{font-size:12px;color:#9a98b8;text-align:center;margin-top:14px;line-height:1.7}
+@media (orientation:landscape) and (max-height:540px){#app{max-width:min(520px,calc((100vh - 118px)*1.0909 + 24px));max-width:min(520px,calc((100svh - 118px)*1.0909 + 24px))}}
 </style>
 </head>
 <body>
@@ -94,8 +95,8 @@ input.tx:focus{border-color:#ffe14d}
     <button class="pbtn" id="langBtn" aria-label="Language / Idioma">PT</button>
     <button class="pbtn" id="muteBtn" aria-label="Sound">♪ON</button>
   </div>
-  <div class="hud" aria-live="polite">
-    <span><span id="lScore"></span> <b id="hScore">0000</b></span>
+  <div class="hud">
+    <span><span id="lScore"></span> <b id="hScore" aria-live="polite">0000</b></span>
     <span><span id="lTime"></span> <b id="hTime">0:00</b></span>
     <span><span id="lParts"></span> <b id="hParts">0/6</b></span>
   </div>
@@ -114,7 +115,7 @@ input.tx:focus{border-color:#ffe14d}
 <div class="ov center" id="results"><div class="box" id="resBox"></div></div>
 
 <script>
-"use strict";
+(()=>{"use strict";
 /* ================= TEXT ================= */
 const T={
  pt:{title:"MONTE A ESTÁTUA DE DANIEL",sub:"Daniel 2:31-45",press:"APERTE START",tapToStart:"(toque na tela)",chooseLevel:"ESCOLHA O NÍVEL",
@@ -171,7 +172,7 @@ const PARTS=[
  {id:"feet",p:5,pt:"PÉS E DEDOS",en:"FEET & TOES",mat:"clay",king:"europe",ref:"Daniel 2:33, 41-43",
   kjv:"\"His feet part of iron and part of clay... the kingdom shall be divided... they shall not cleave one to another, even as iron is not mixed with clay.\"",ptv:"\"Os pés eram em parte de ferro e em parte de barro... O reino será dividido, e eles não vão ficar unidos, assim como o ferro não se mistura com o barro.\""},
  {id:"stone",p:6,pt:"PEDRA",en:"STONE",mat:"stone",king:"god",ref:"Daniel 2:34-35, 44-45",
-  kjv:"\"A stone was cut out without hands... the God of heaven set up a kingdom, which shall never be destroyed... and it shall stand for ever.\"",ptv:"\"Uma pedra se soltou sem que ninguém tocasse nela... O Deus do céu vai criar um reino que nunca será destruído, e ele vai durar para sempre.\""}
+  kjv:"\"A stone was cut out without hands... in the days of these kings shall the God of heaven set up a kingdom, which shall never be destroyed... and it shall stand for ever.\"",ptv:"\"Uma pedra se soltou sem que ninguém tocasse nela... O Deus do céu vai criar um reino que nunca será destruído, e ele vai durar para sempre.\""}
 ];
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 const S={challenge:LS.get("d2r_style","normal")==="challenge",revealing:false,revIdx:0,stopped:false,lang:LS.get("d2r_lang","pt"),muted:LS.get("d2r_mute","0")==="1",screen:"title",level:"easy",ans:{},base:0,shown:0,t0:0,elapsed:0,sel:0,
@@ -431,11 +432,12 @@ function renderParts(){
   b.innerHTML=(k+1)+". "+nm(P)+(a?"<small>"+(hid?"✎ OK":(a.mOk+a.kOk)+"/2")+"</small>":"");b.onclick=()=>{audioInit();pickPart(P.p)};el.appendChild(b)});
  if(S.challenge&&S.screen==="play"&&!S.revealing&&!S.step&&Object.keys(S.ans).length===6){const f=document.createElement("button");f.className="finb";f.id="finBtn";f.textContent=t("finish");f.onclick=()=>{audioInit();startReveal()};el.appendChild(f)}
 }
+function fy(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const x=a[i];a[i]=a[j];a[j]=x}return a}
 function pickPart(p){
  if(S.screen!=="play"||S.revealing)return;
  const prev=S.challenge?S.ans[p]:null;
  if(S.ans[p]&&!S.challenge){SFX.deny();flashHint(t("done"));return}
- S.sel=p;S.step="mat";S.pick=prev?{was:prev.mat,typed:prev.typed||""}:{};S.kingOrder=KINGS.map(k=>k.id).sort(()=>Math.random()-.5);SFX.blip();openDlg();renderParts();updHud();
+ S.sel=p;S.step="mat";S.pick=prev?{was:prev.mat,typed:prev.typed||""}:{};S.kingOrder=fy(KINGS.map(k=>k.id));S.matOrder=fy(MATS);SFX.blip();openDlg();renderParts();updHud();
 }
 let hintTimer;function flashHint(txt){const h=$("hint");h.textContent=txt;h.style.display="block";clearTimeout(hintTimer);hintTimer=setTimeout(()=>{hintTimer=null;h.textContent=t("hint");updHud()},1400)}
 /* swatch images */
@@ -445,12 +447,12 @@ const SWIMG={};function makeSwatches(){const c=document.createElement("canvas");
   SWIMG[m.id]=c.toDataURL()})}
 makeSwatches();
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]))}
-function openDlg(){$("dlg").classList.add("show");renderDlg()}
-function closeDlg(){$("dlg").classList.remove("show");if(S.typing){clearInterval(S.typing.iv);S.typing=null}}
+function openDlg(){try{if(!(history.state&&history.state.d2dlg))history.pushState({d2dlg:1},"")}catch(e){}$("dlg").classList.add("show");renderDlg()}
+function closeDlg(){if(history.state&&history.state.d2dlg){try{S.navBack=true;history.back()}catch(e){}}$("dlg").classList.remove("show");if(S.typing){clearInterval(S.typing.iv);S.typing=null}}
 function renderDlg(){
  const P=PARTS.find(x=>x.p===S.sel),box=$("dlgBox");
  if(S.step==="mat"){
-  box.innerHTML=`<h2>► ${esc(nm(P))}</h2><h3>1/2 · ${t("step1")}</h3><div class="grid3">${MATS.map((m,i)=>`<button class="sw${S.pick&&S.pick.was===m.id?" was":""}" data-m="${m.id}"><img alt="" src="${SWIMG[m.id]}"><span>${i+1}. ${esc(nm(m))}</span></button>`).join("")}</div>
+  box.innerHTML=`<h2>► ${esc(nm(P))}</h2><h3>1/2 · ${t("step1")}</h3><div class="grid3">${(S.matOrder||MATS).map((m,i)=>`<button class="sw${S.pick&&S.pick.was===m.id?" was":""}" data-m="${m.id}"><img alt="" src="${SWIMG[m.id]}"><span>${i+1}. ${esc(nm(m))}</span></button>`).join("")}</div>
    <div class="row"><button class="pbtn" id="dBack">${t("close")}</button></div>`;
   box.querySelectorAll(".sw").forEach(b=>b.onclick=()=>chooseMat(b.dataset.m));$("dBack").onclick=()=>{SFX.blip();cancelDlg()};
   setTimeout(()=>{const f=box.querySelector(".sw");f&&f.focus({preventScroll:true})},30);
@@ -494,18 +496,53 @@ function cancelDlg(){S.step=null;closeDlg();renderParts();updHud()}
 function chooseMat(id){SFX.blip();S.pick.mat=id;S.step="king";renderDlg()}
 function norm(s){return(" "+String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g," ").trim()+" ")}
 function lev(a,b){const m=a.length,n=b.length;if(Math.abs(m-n)>2)return 9;let d=Array.from({length:n+1},(_,j)=>j);for(let i=1;i<=m;i++){let pr=d[0];d[0]=i;for(let j=1;j<=n;j++){const tmp=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,pr+(a[i-1]===b[j-1]?0:1));pr=tmp}}return d[n]}
-function matchKing(input){
- const s=norm(input);if(s.trim()==="")return null;let best=null,bl=0;
- for(const k of KINGS)for(const a of k.al){const an=norm(a);if(s.includes(an)&&an.length>bl){best=k.id;bl=an.length}}
- if(best)return best;
- const st=s.trim();let bd=9;for(const k of KINGS)for(const a of k.al){const an=norm(a).trim();if(an.length<5)continue;const d=lev(st,an);const tol=an.length>=9?2:1;if(d<=tol&&d<bd){bd=d;best=k.id}}
- return best;
-}
+/*KINGDOMS-BEGIN*/
+/* Shared kingdom-name matcher (Hard mode). Same code in both games and on the server. */
+(function (root) {
+  "use strict";
+  var ALIAS = [ // [key, {pre: word-start prefixes (may span words), exact: whole words/phrases}]
+    ["god", { pre: ["deus", "jesus", "crist", "christ", "etern", "heaven", "celest", "messia", "reino de deus", "kingdom of god", "reino dos ceus", "reino do ceu", "reino celest"], exact: ["god", "gods", "ceu", "ceus", "lord", "senhor"] }],
+    ["divided", { pre: ["europ", "divid", "divis", "fragment", "barbar", "tribo", "tribe", "partid", "nacoes", "nations", "nacao", "idade media", "medieval", "middle age", "feudal"], exact: [] }],
+    ["babylon", { pre: ["babil", "babel", "babylon", "nabuco", "nebuchad", "caldeu", "caldei", "chalde", "neobabil", "neo babil"], exact: [] }],
+    ["persia", { pre: ["pers", "medo", "medes", "media e pers", "media pers", "ciro", "cyrus", "aquemen", "achaemen", "dario", "darius"], exact: [] }],
+    ["greece", { pre: ["grec", "greek", "greec", "helen", "hellen", "alexand", "macedon", "seleuc", "ptolom", "ptolem"], exact: ["grego", "grega", "gregos", "gregas"] }],
+    ["rome", { pre: ["roma", "rome", "roman", "cesar", "caesar", "latin"], exact: [] }]
+  ];
+  var FUZZY = { babilonia: "babylon", babylon: "babylon", babilon: "babylon", persia: "persia", persas: "persia", medopersia: "persia", grecia: "greece", greece: "greece",
+    grego: "greece", gregos: "greece", roma: "rome", romano: "rome", rome: "rome", europa: "divided", europe: "divided", dividido: "divided", divididos: "divided",
+    divided: "divided", deus: "god", jesus: "god", cristo: "god", christ: "god" };
+  function norm(s) { return String(s || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim(); }
+  function lev(a, b) { var m = a.length, n = b.length, d = [], i, j; for (i = 0; i <= m; i++) d[i] = [i]; for (j = 0; j <= n; j++) d[0][j] = j;
+    for (i = 1; i <= m; i++) for (j = 1; j <= n; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[m][n]; }
+  // all kingdoms named in the text (canonical ids: babylon persia greece rome divided god)
+  function matches(input) {
+    var s = norm(input); if (!s) return [];
+    var padded = " " + s + " ", out = [];
+    ALIAS.forEach(function (row) {
+      var key = row[0], a = row[1], hit = false, i;
+      for (i = 0; i < a.exact.length && !hit; i++) if (padded.indexOf(" " + a.exact[i] + " ") >= 0) hit = true;
+      for (i = 0; i < a.pre.length && !hit; i++) if (padded.indexOf(" " + a.pre[i]) >= 0) hit = true;
+      if (hit) out.push(key);
+    });
+    if (out.length) return out;
+    var words = s.split(" ").concat([s.replace(/ /g, "")]), best = null, bd = 99;
+    words.forEach(function (w) { if (w.length < 4) return;
+      Object.keys(FUZZY).forEach(function (f) { var d = lev(w, f), tol = f.length >= 6 ? 2 : 1; if (d <= tol && d < bd) { bd = d; best = FUZZY[f]; } }); });
+    return best ? [best] : [];
+  }
+  // correct if the right kingdom is named and at most one other (e.g. "Roma dividida em Oriente e Ocidente")
+  function judge(input, correct) { var m = matches(input); return m.length > 0 && m.length <= 2 && m.indexOf(correct) >= 0; }
+  function best(input, correct) { var m = matches(input); if (correct && judge(input, correct)) return correct; return m.length === 1 ? m[0] : (m[0] || null); }
+  var api = { matches: matches, judge: judge, best: best, norm: norm };
+  if (typeof module === "object" && module.exports) module.exports = api; else root.D2K = api;
+})(typeof window !== "undefined" ? window : this);
+/*KINGDOMS-END*/
+function matchKing(input,correct){const c=correct==="europe"?"divided":correct;const b=D2K.best(input,c);return b==="divided"?"europe":b}
 function hardSubmit(){const inp=$("kIn");const v=inp?inp.value:"";if(!v.trim()){SFX.deny();inp.classList.remove("shake");void inp.offsetWidth;inp.classList.add("shake");inp.placeholder=t("empty");return}
- submit(matchKing(v),v.trim())}
+ const P=PARTS.find(x=>x.p===S.sel);submit(matchKing(v,P&&P.king),v.trim())}
 function submit(kid,typed){
  const P=PARTS.find(x=>x.p===S.sel);
- const mOk=S.pick.mat===P.mat?1:0,kOk=kid===P.king?1:0;
+ const mOk=S.pick.mat===P.mat?1:0,kOk=(S.level==="hard"&&typed!=null?D2K.judge(typed,P.king==="europe"?"divided":P.king):kid===P.king)?1:0;
  S.ans[P.p]={mat:S.pick.mat,king:kid,typed,mOk,kOk,t:performance.now()};
  if(S.challenge){sparkle(P.p);SFX.blip();S.step="saved";renderParts();updHud();renderSaved();return}
  S.base+=(mOk+kOk)*100*mult();
@@ -513,6 +550,7 @@ function submit(kid,typed){
  sparkle(P.p);(mOk&&kOk?SFX.correct:(mOk||kOk)?SFX.half:SFX.wrong)();
  S.step="fb";renderParts();updHud();renderFeedback(true);
 }
+const DATES={pt:{babylon:"605–539 a.C.",persia:"539–331 a.C.",greece:"331–168 a.C.",rome:"168 a.C. – 476 d.C.",europe:"476 d.C. até hoje",god:"para sempre"},en:{babylon:"605–539 BC",persia:"539–331 BC",greece:"331–168 BC",rome:"168 BC – AD 476",europe:"AD 476 to today",god:"forever"}};
 function fbSegments(){
  const P=PARTS.find(x=>x.p===S.sel),a=S.ans[P.p],mc=MATS.find(x=>x.id===P.mat),mp=MATS.find(x=>x.id===a.mat),kc=KINGS.find(x=>x.id===P.king);
  const kp=a.king?KINGS.find(x=>x.id===a.king):null;const segs=[];const L=(txt,c)=>segs.push([txt,c]);
@@ -520,8 +558,9 @@ function fbSegments(){
  L(t("kingdom")+": ","w");
  const yours=S.level==="hard"?(a.typed||"")+(kp&&!a.kOk?" ("+nm(kp)+")":""):(kp?nm(kp):"?");
  if(a.kOk){L(nm(kc)+" ✓ "+t("correct")+"\n","g")}else{L(yours+" ✗ "+t("wrong")+"\n","r");L("  "+t("answer")+" "+nm(kc)+"\n","y")}
+ L("  ⌛ "+DATES[S.lang][P.king]+"\n","dim");
  L("+"+Math.round((a.mOk+a.kOk)*100*mult())+" "+t("pts")+"\n\n","c");
- L("📖 "+P.ref+"\n","y");L(S.lang==="pt"?P.ptv:P.kjv,"dim");return segs;
+ L("📖 "+P.ref+(S.lang==="pt"?" (paráfrase)":"")+"\n","y");L(S.lang==="pt"?P.ptv:P.kjv,"dim");return segs;
 }
 function renderFeedback(animate){
  const P=PARTS.find(x=>x.p===S.sel),box=$("dlgBox");if(S.typing){clearInterval(S.typing.iv);S.typing=null}
@@ -549,7 +588,7 @@ function showResults(){
  const total=Math.round((corr*100+bonus)*mult()),max=Math.round(1500*mult());
  const key="d2r_hs_"+S.level+(S.challenge?"_c":""),prev=+LS.get(key,"0");const rec=total>prev;if(rec)LS.set(key,String(total));
  S.lastScore={corr,bonus,total,max,rec,best:Math.max(prev,total),ch:S.challenge};S.shown=total;updHud();
- const r=total/max,stars=r>=.8?3:r>=.55?2:r>=.25?1:0;S.lastScore.stars=stars;
+ const r=total/max,stars=r>=.9?3:r>=.65?2:r>=.35?1:0;S.lastScore.stars=stars;
  renderResults();$("results").classList.add("show");
  setTimeout(()=>{if(S.screen==="results")musicStart()},2600);
  setTimeout(()=>{const b=$("rAgain");b&&b.focus({preventScroll:true})},50);
@@ -597,7 +636,7 @@ $("title").addEventListener("click",e=>{if(titleStage===0&&e.target.id!=="pressB
 function applyLang(){
  document.documentElement.lang=S.lang==="pt"?"pt-BR":"en";document.title=S.lang==="pt"?"Monte a Estátua de Daniel (Retrô)":"Build Daniel's Statue (Retro)";
  $("langBtn").textContent=S.lang==="pt"?"PT|en":"EN|pt";$("tTitle").textContent=t("title");$("lScore").textContent=t("score");$("lTime").textContent=t("time");$("lParts").textContent=t("parts");
- $("hint").textContent=t("hint");$("foot").textContent=t("foot");$("skip").textContent=t("skip");setMute(S.muted);
+ $("cv").setAttribute("aria-label",S.lang==="pt"?"Estátua do sonho de Daniel 2":"The statue from the dream in Daniel 2");$("hint").textContent=t("hint");$("foot").textContent=t("foot");$("skip").textContent=t("skip");setMute(S.muted);
  renderParts();if($("title").classList.contains("show"))renderTitle();if($("dlg").classList.contains("show"))renderDlg();if($("results").classList.contains("show"))renderResults();
  if(S.finale&&S.finale.ph<5){const ph=S.finale.ph;caption(ph>=4?t("mountain"):ph>=3?t("chaff"):ph>=1?t("smash"):"")}
 }
@@ -628,7 +667,7 @@ document.addEventListener("keydown",e=>{
  }
  if(S.step==="saved"){if(k==="Escape"||k==="Enter"){e.preventDefault();$("fbGo")&&$("fbGo").click()}return}
  if(k==="Escape"){if(S.step==="mat")cancelDlg();else if(S.step==="king"){S.step="mat";renderDlg()}else fbContinue();return}
- if(S.step==="mat"&&/^[1-6]$/.test(k)){chooseMat(MATS[+k-1].id);return}
+ if(S.step==="mat"&&/^[1-6]$/.test(k)){chooseMat((S.matOrder||MATS)[+k-1].id);return}
  if(S.step==="king"&&S.level==="easy"&&/^[1-6]$/.test(k)){submit(S.kingOrder[+k-1],null);return}
 });
 /* ================= LOOP ================= */
@@ -638,9 +677,15 @@ function loop(ts){
  if(S.screen==="play")updHud();
  render(ts);requestAnimationFrame(loop);
 }
+window.addEventListener("popstate",()=>{const open=$("dlg").classList.contains("show");if(S.navBack){S.navBack=false;if(open){try{history.pushState({d2dlg:1},"")}catch(e){}}return}if(open&&(S.step==="mat"||S.step==="king"))cancelDlg()});
+window.addEventListener("beforeunload",e=>{if(S.screen==="play"&&Object.keys(S.ans).length){e.preventDefault();e.returnValue=""}});
 applyLang();showTitle(false);requestAnimationFrame(loop);
 // test hook
-window.__D2R={S,PARTS,MATS,KINGS,matchKing,newGame,pickPart,chooseMat,submit,fbContinue,skipFinale};
+if(/[?&]debug=1/.test(location.search))window.__D2R={S,PARTS,MATS,KINGS,matchKing,newGame,pickPart,chooseMat,submit,fbContinue,skipFinale};
+})();
 </script>
+<script>(function(){var URL="https://bible-study-game-production.up.railway.app/",ST="display:block;margin:10px auto;max-width:100%;box-sizing:border-box;background:#000;color:#ffe14d;border:3px solid #fff;font:12px monospace;padding:10px 14px;text-decoration:none;box-shadow:0 4px 18px rgba(0,0,0,.5);text-align:center";function t(){var en=(document.documentElement.lang||"").indexOf("en")===0;return en?"🌐 New online version: leaderboard + multiplayer ›":"🌐 Nova versão online: ranking + multijogador ›";}
+var els=[];["#titleBox", "#resBox"].forEach(function(sel){var c=document.querySelector(sel);if(!c)return;var a=document.createElement("a");a.className="d2online";a.href=URL;a.style.cssText=ST;a.textContent=t();c.insertBefore(a,c.firstChild);els.push(a);});
+new MutationObserver(function(){els.forEach(function(a){a.textContent=t();});}).observe(document.documentElement,{attributes:true,attributeFilter:["lang"]});})();</script>
 </body>
 </html>
