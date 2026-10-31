@@ -35,6 +35,14 @@ button{font-family:inherit;cursor:pointer;color:#fff}
 .partb.half{background:#8a6a00;box-shadow:inset -3px -3px 0 #4a3800,inset 3px 3px 0 #e8c33a,0 0 0 2px #000}
 .partb.bad{background:#8a1d1d;box-shadow:inset -3px -3px 0 #4a0b0b,inset 3px 3px 0 #e05555,0 0 0 2px #000}
 .partb small{display:block;color:#ffe14d;font-size:12px;margin-top:3px}
+.partb.saved{background:#2a3cc8;box-shadow:inset -3px -3px 0 #0a145a,inset 3px 3px 0 #7d94ff,0 0 0 2px #000}
+.finb{grid-column:1/-1;border:0;font-size:16px;padding:12px 6px;min-height:50px;background:#e0a020;color:#000;box-shadow:inset -3px -3px 0 #8a5a00,inset 3px 3px 0 #ffe08a,0 0 0 2px #fff;animation:blinkb 1s steps(2) infinite}
+@keyframes blinkb{50%{box-shadow:inset -3px -3px 0 #8a5a00,inset 3px 3px 0 #ffe08a,0 0 0 2px #000}}
+.stylerow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.stylerow .choice{text-align:center;font-size:15px;padding:10px 4px}
+.stylerow .choice[aria-pressed=true]{background:#e0a020;color:#000;box-shadow:inset -3px -3px 0 #8a5a00,inset 3px 3px 0 #ffe08a,0 0 0 2px #fff}
+.stylerow .choice small{display:block;font-size:11px;line-height:1.4;margin-top:4px}
+.sw.was{outline:3px dashed #ffe14d;outline-offset:1px}
 /* overlays */
 .ov{position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;z-index:20;padding:8px}
 .ov.show{display:flex}
@@ -118,7 +126,7 @@ const T={
   correctN:"ACERTOS",best:"RECORDE",newRec:"NOVO RECORDE!",again:"JOGAR NOVAMENTE",change:"MUDAR NÍVEL",level:"NÍVEL",
   smash:"A pedra, cortada sem mãos, atinge os pés de ferro e barro! (Dn 2:34)",chaff:"...e tudo virou palha que o vento levou. (Dn 2:35)",
   mountain:"\"A pedra que atingiu a estátua virou uma grande montanha e encheu a terra inteira.\" (Daniel 2:35)",
-  skip:"PULAR ►►",empty:"Digite uma resposta!",pts:"pontos",done:"Essa parte já foi feita!",
+  skip:"PULAR ►►",styleT:"ESTILO DE JOGO",normal:"NORMAL",normalDesc:"Veja se acertou a cada parte",challenge:"DESAFIO",challengeDesc:"Sem dicas! Resultado só no final",finish:"TERMINAR ►",saved:"RESPOSTA SALVA",savedD:"Toque na parte de novo para mudar antes de terminar.",reveal:"REVELANDO",next:"PRÓXIMA ►",seeStone:"VER A PEDRA ►",allDoneC:"▲ REVISE OU TOQUE EM TERMINAR ▲",empty:"Digite uma resposta!",pts:"pontos",done:"Essa parte já foi feita!",
   foot:"Daniel 2 · Os reinos humanos passam; o Reino de Deus dura para sempre.",
   finalMsg:"Deus conduz a história. Podemos confiar n'Ele para o nosso futuro!",soundOn:"♪ON",soundOff:"♪OFF",keys:"Teclado: setas + ENTER, 1-6 para escolher"},
  en:{title:"BUILD DANIEL'S STATUE",sub:"Daniel 2:31-45",press:"PRESS START",tapToStart:"(tap the screen)",chooseLevel:"SELECT LEVEL",
@@ -130,7 +138,7 @@ const T={
   correctN:"CORRECT",best:"HIGH SCORE",newRec:"NEW RECORD!",again:"PLAY AGAIN",change:"CHANGE LEVEL",level:"LEVEL",
   smash:"The stone, cut out without hands, smites the feet of iron and clay! (Dan 2:34)",chaff:"...and it all became like chaff that the wind carried away. (Dan 2:35)",
   mountain:"\"The stone that smote the image became a great mountain, and filled the whole earth.\" (Daniel 2:35)",
-  skip:"SKIP ►►",empty:"Type an answer!",pts:"points",done:"That part is already done!",
+  skip:"SKIP ►►",styleT:"GAME STYLE",normal:"NORMAL",normalDesc:"See if you got each part right",challenge:"CHALLENGE",challengeDesc:"No hints! Results only at the end",finish:"FINISH ►",saved:"ANSWER SAVED",savedD:"Tap the part again to change it before you finish.",reveal:"REVEALING",next:"NEXT ►",seeStone:"SEE THE STONE ►",allDoneC:"▲ REVIEW OR TAP FINISH ▲",empty:"Type an answer!",pts:"points",done:"That part is already done!",
   foot:"Daniel 2 · Human kingdoms pass away; God's kingdom stands forever.",
   finalMsg:"God directs history. We can trust Him with our future!",soundOn:"♪ON",soundOff:"♪OFF",keys:"Keyboard: arrows + ENTER, 1-6 to choose"}
 };
@@ -166,7 +174,7 @@ const PARTS=[
   kjv:"\"A stone was cut out without hands... the God of heaven set up a kingdom, which shall never be destroyed... and it shall stand for ever.\"",ptv:"\"Uma pedra se soltou sem que ninguém tocasse nela... O Deus do céu vai criar um reino que nunca será destruído, e ele vai durar para sempre.\""}
 ];
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v===null?d:v}catch(e){return d}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
-const S={lang:LS.get("d2r_lang","pt"),muted:LS.get("d2r_mute","0")==="1",screen:"title",level:"easy",ans:{},base:0,shown:0,t0:0,elapsed:0,sel:0,
+const S={challenge:LS.get("d2r_style","normal")==="challenge",revealing:false,revIdx:0,stopped:false,lang:LS.get("d2r_lang","pt"),muted:LS.get("d2r_mute","0")==="1",screen:"title",level:"easy",ans:{},base:0,shown:0,t0:0,elapsed:0,sel:0,
  step:null,pick:null,kingOrder:null,finale:null,typing:null,lastScore:null};
 const t=k=>T[S.lang][k];
 const nm=o=>o[S.lang];
@@ -406,25 +414,30 @@ function skipFinale(){if(!S.finale||S.finale.ph>=5)return;S.finale.ph=5;SFX.blip
 function fmt(s){s=Math.floor(s);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")}
 const mult=()=>S.level==="hard"?1.5:1;
 function newGame(level){
- S.level=level;S.ans={};S.base=0;S.shown=0;S.t0=performance.now();S.elapsed=0;S.screen="play";S.step=null;S.sel=1;S.finale=null;debris=[];sparks=[];
+ S.level=level;S.revealing=false;S.revIdx=0;S.stopped=false;S.ans={};S.base=0;S.shown=0;S.t0=performance.now();S.elapsed=0;S.screen="play";S.step=null;S.sel=1;S.finale=null;debris=[];sparks=[];
  caption("");$("skip").style.display="none";$("results").classList.remove("show");$("title").classList.remove("show");
  renderParts();updHud();if(!AU.on)musicStart();
 }
 function correctCount(){let c=0;for(const k in S.ans){c+=S.ans[k].mOk+S.ans[k].kOk}return c}
-function updHud(){$("hScore").textContent=String(Math.round(S.shown)).padStart(4,"0");$("hTime").textContent=fmt(S.elapsed);$("hParts").textContent=Object.keys(S.ans).length+"/6";
- $("hint").style.display=(S.screen==="play"&&!S.step&&Object.keys(S.ans).length===0)?"block":"none"}
+function updHud(){$("hScore").textContent=(S.challenge&&S.screen==="play"&&!S.revealing)?"????":String(Math.round(S.shown)).padStart(4,"0");$("hTime").textContent=fmt(S.elapsed);$("hParts").textContent=Object.keys(S.ans).length+"/6";
+ const allC=S.challenge&&S.screen==="play"&&!S.step&&!S.revealing&&Object.keys(S.ans).length===6;
+ if(allC&&!hintTimer){$("hint").textContent=t("allDoneC")}else if(!hintTimer&&$("hint").textContent!==t("hint")&&S.screen==="play"&&!allC){$("hint").textContent=t("hint")}
+ $("hint").style.display=(S.screen==="play"&&!S.step&&(Object.keys(S.ans).length===0||allC))?"block":"none"}
 function renderParts(){
  const el=$("parts");el.innerHTML="";
  PARTS.forEach((P,k)=>{const b=document.createElement("button");b.className="partb";const a=S.ans[P.p];
-  if(a){const n=a.mOk+a.kOk;b.classList.add(n===2?"ok":n===1?"half":"bad")}else if(S.step&&S.sel===P.p)b.classList.add("sel");
-  b.innerHTML=(k+1)+". "+nm(P)+(a?"<small>"+(a.mOk+a.kOk)+"/2</small>":"");b.onclick=()=>{audioInit();pickPart(P.p)};el.appendChild(b)});
+  const hid=a&&S.challenge&&!a.rev;
+  if(a&&!hid){const n=a.mOk+a.kOk;b.classList.add(n===2?"ok":n===1?"half":"bad")}else if(S.step&&S.sel===P.p)b.classList.add("sel");else if(hid)b.classList.add("saved");
+  b.innerHTML=(k+1)+". "+nm(P)+(a?"<small>"+(hid?"✎ OK":(a.mOk+a.kOk)+"/2")+"</small>":"");b.onclick=()=>{audioInit();pickPart(P.p)};el.appendChild(b)});
+ if(S.challenge&&S.screen==="play"&&!S.revealing&&!S.step&&Object.keys(S.ans).length===6){const f=document.createElement("button");f.className="finb";f.id="finBtn";f.textContent=t("finish");f.onclick=()=>{audioInit();startReveal()};el.appendChild(f)}
 }
 function pickPart(p){
- if(S.screen!=="play")return;
- if(S.ans[p]){SFX.deny();flashHint(t("done"));return}
- S.sel=p;S.step="mat";S.pick={};S.kingOrder=KINGS.map(k=>k.id).sort(()=>Math.random()-.5);SFX.blip();openDlg();renderParts();updHud();
+ if(S.screen!=="play"||S.revealing)return;
+ const prev=S.challenge?S.ans[p]:null;
+ if(S.ans[p]&&!S.challenge){SFX.deny();flashHint(t("done"));return}
+ S.sel=p;S.step="mat";S.pick=prev?{was:prev.mat,typed:prev.typed||""}:{};S.kingOrder=KINGS.map(k=>k.id).sort(()=>Math.random()-.5);SFX.blip();openDlg();renderParts();updHud();
 }
-let hintTimer;function flashHint(txt){const h=$("hint");h.textContent=txt;h.style.display="block";clearTimeout(hintTimer);hintTimer=setTimeout(()=>{h.textContent=t("hint");updHud()},1400)}
+let hintTimer;function flashHint(txt){const h=$("hint");h.textContent=txt;h.style.display="block";clearTimeout(hintTimer);hintTimer=setTimeout(()=>{hintTimer=null;h.textContent=t("hint");updHud()},1400)}
 /* swatch images */
 const SWIMG={};function makeSwatches(){const c=document.createElement("canvas");c.width=c.height=12;const g=c.getContext("2d"),B=[0,2,3,1];
  MATS.forEach(m=>{for(let y=0;y<12;y++)for(let x=0;x<12;x++){let f=1-((x+y)/22);const b=(B[(y%2)*2+x%2]+.5)/4;let l=Math.max(0,Math.min(3,Math.floor(f*3+b)));
@@ -437,7 +450,7 @@ function closeDlg(){$("dlg").classList.remove("show");if(S.typing){clearInterval
 function renderDlg(){
  const P=PARTS.find(x=>x.p===S.sel),box=$("dlgBox");
  if(S.step==="mat"){
-  box.innerHTML=`<h2>► ${esc(nm(P))}</h2><h3>1/2 · ${t("step1")}</h3><div class="grid3">${MATS.map((m,i)=>`<button class="sw" data-m="${m.id}"><img alt="" src="${SWIMG[m.id]}"><span>${i+1}. ${esc(nm(m))}</span></button>`).join("")}</div>
+  box.innerHTML=`<h2>► ${esc(nm(P))}</h2><h3>1/2 · ${t("step1")}</h3><div class="grid3">${MATS.map((m,i)=>`<button class="sw${S.pick&&S.pick.was===m.id?" was":""}" data-m="${m.id}"><img alt="" src="${SWIMG[m.id]}"><span>${i+1}. ${esc(nm(m))}</span></button>`).join("")}</div>
    <div class="row"><button class="pbtn" id="dBack">${t("close")}</button></div>`;
   box.querySelectorAll(".sw").forEach(b=>b.onclick=()=>chooseMat(b.dataset.m));$("dBack").onclick=()=>{SFX.blip();cancelDlg()};
   setTimeout(()=>{const f=box.querySelector(".sw");f&&f.focus({preventScroll:true})},30);
@@ -459,6 +472,23 @@ function renderDlg(){
   }
   $("dBack").onclick=()=>{SFX.blip();S.step="mat";renderDlg()};
  }else if(S.step==="fb"){renderFeedback(false)}
+ else if(S.step==="saved"){renderSaved()}
+}
+function renderSaved(){
+ const P=PARTS.find(x=>x.p===S.sel),a=S.ans[P.p],box=$("dlgBox"),m=MATS.find(x=>x.id===a.mat),k=a.king?KINGS.find(x=>x.id===a.king):null;
+ const yk=S.level==="hard"?(a.typed||""):(k?nm(k):"?");
+ box.innerHTML=`<h2>► ${esc(nm(P))}</h2><h3>💾 ${t("saved")}</h3><div class="typer"><span class="w">${t("material")}: </span><span class="y">${esc(nm(m))}</span>\n<span class="w">${t("kingdom")}: </span><span class="y">${esc(yk)}</span>\n\n<span class="dim">${t("savedD")}</span></div>
+  <div class="row"><span></span><button class="pbtn" id="fbGo">${t("cont")}</button></div>`;
+ $("fbGo").onclick=()=>{SFX.blip();S.step=null;closeDlg();renderParts();updHud()};setTimeout(()=>$("fbGo")&&$("fbGo").focus({preventScroll:true}),40);
+}
+function startReveal(){
+ if(Object.keys(S.ans).length<6||S.revealing)return;
+ S.elapsed=(performance.now()-S.t0)/1000;S.stopped=true;S.revealing=true;S.revIdx=0;S.base=0;S.shown=0;revealPart();
+}
+function revealPart(){
+ const P=PARTS[S.revIdx],a=S.ans[P.p];a.rev=true;S.sel=P.p;S.base+=(a.mOk+a.kOk)*100*mult();
+ sparkle(P.p);(a.mOk&&a.kOk?SFX.correct:(a.mOk||a.kOk)?SFX.half:SFX.wrong)();
+ S.step="fb";renderParts();updHud();$("dlg").classList.add("show");renderFeedback(true);
 }
 function cancelDlg(){S.step=null;closeDlg();renderParts();updHud()}
 function chooseMat(id){SFX.blip();S.pick.mat=id;S.step="king";renderDlg()}
@@ -477,8 +507,9 @@ function submit(kid,typed){
  const P=PARTS.find(x=>x.p===S.sel);
  const mOk=S.pick.mat===P.mat?1:0,kOk=kid===P.king?1:0;
  S.ans[P.p]={mat:S.pick.mat,king:kid,typed,mOk,kOk,t:performance.now()};
+ if(S.challenge){sparkle(P.p);SFX.blip();S.step="saved";renderParts();updHud();renderSaved();return}
  S.base+=(mOk+kOk)*100*mult();
- if(Object.keys(S.ans).length===6)S.elapsed=(performance.now()-S.t0)/1000;
+ if(!S.challenge&&Object.keys(S.ans).length===6)S.elapsed=(performance.now()-S.t0)/1000;
  sparkle(P.p);(mOk&&kOk?SFX.correct:(mOk||kOk)?SFX.half:SFX.wrong)();
  S.step="fb";renderParts();updHud();renderFeedback(true);
 }
@@ -494,7 +525,7 @@ function fbSegments(){
 }
 function renderFeedback(animate){
  const P=PARTS.find(x=>x.p===S.sel),box=$("dlgBox");if(S.typing){clearInterval(S.typing.iv);S.typing=null}
- box.innerHTML=`<h2>► ${esc(nm(P))}</h2><div class="typer" id="typer"></div><div class="row"><span></span><button class="pbtn" id="fbGo">${t("cont")}</button></div>`;
+ box.innerHTML=`${S.revealing?`<h3 style="text-align:center">${t("reveal")} ${S.revIdx+1}/6</h3>`:""}<h2>► ${esc(nm(P))}</h2><div class="typer" id="typer"></div><div class="row"><span></span><button class="pbtn" id="fbGo">${S.revealing?(S.revIdx<5?t("next"):t("seeStone")):t("cont")}</button></div>`;
  const segs=fbSegments(),ty=$("typer"),spans=segs.map(([tx,c])=>{const s=document.createElement("span");s.className=c;ty.appendChild(s);return s});
  const cur=document.createElement("span");cur.className="cursor";ty.appendChild(cur);
  const finish=()=>{segs.forEach(([tx],i)=>spans[i].textContent=tx);cur.remove();if(S.typing){clearInterval(S.typing.iv);S.typing=null}};
@@ -505,8 +536,10 @@ function renderFeedback(animate){
 }
 function fbContinue(){
  if(S.typing){S.typing.finish();return}
+ if(S.revealing){SFX.blip();if(S.revIdx<5){S.revIdx++;revealPart();return}
+  S.revealing=false;S.step=null;closeDlg();renderParts();updHud();setTimeout(startFinale,450);return}
  SFX.blip();S.step=null;closeDlg();renderParts();updHud();
- if(Object.keys(S.ans).length===6)setTimeout(startFinale,450);
+ if(Object.keys(S.ans).length===6&&!S.challenge)setTimeout(startFinale,450);
  else{const nx=PARTS.find(x=>!S.ans[x.p]);if(nx)S.sel=nx.p}
 }
 /* ================= RESULTS ================= */
@@ -514,8 +547,8 @@ function showResults(){
  S.screen="results";$("skip").style.display="none";
  const corr=correctCount(),T_=S.level==="hard"?300:180,bonus=Math.round(300*Math.max(0,1-S.elapsed/T_)*(corr/12));
  const total=Math.round((corr*100+bonus)*mult()),max=Math.round(1500*mult());
- const key="d2r_hs_"+S.level,prev=+LS.get(key,"0");const rec=total>prev;if(rec)LS.set(key,String(total));
- S.lastScore={corr,bonus,total,max,rec,best:Math.max(prev,total)};S.shown=total;updHud();
+ const key="d2r_hs_"+S.level+(S.challenge?"_c":""),prev=+LS.get(key,"0");const rec=total>prev;if(rec)LS.set(key,String(total));
+ S.lastScore={corr,bonus,total,max,rec,best:Math.max(prev,total),ch:S.challenge};S.shown=total;updHud();
  const r=total/max,stars=r>=.8?3:r>=.55?2:r>=.25?1:0;S.lastScore.stars=stars;
  renderResults();$("results").classList.add("show");
  setTimeout(()=>{if(S.screen==="results")musicStart()},2600);
@@ -525,7 +558,7 @@ function renderResults(){
  const L=S.lastScore;if(!L)return;
  $("resBox").innerHTML=`<h2 style="text-align:center">★ ${t("results")} ★</h2>
  <div class="stars" style="text-align:center">${[0,1,2].map(i=>i<L.stars?"★":"<span class='off'>★</span>").join("")}</div>
- <table class="res"><tr><td>${t("level")}</td><td>${t(S.level)}</td></tr>
+ <table class="res"><tr><td>${t("level")}</td><td>${t(S.level)}${S.lastScore.ch?" · "+t("challenge"):""}</td></tr>
  <tr><td>${t("correctN")}</td><td>${L.corr}/12</td></tr><tr><td>${t("time")}</td><td>${fmt(S.elapsed)}</td></tr>
  <tr><td>${t("base")}</td><td>${L.corr*100}</td></tr><tr><td>${t("speed")}</td><td>+${L.bonus}</td></tr>
  ${S.level==="hard"?`<tr><td>${t("mult")}</td><td>x1.5</td></tr>`:""}
@@ -543,15 +576,19 @@ function showTitle(levelSel){
  titleStage=levelSel?1:0;renderTitle();$("title").classList.add("show");renderParts();updHud();
 }
 function renderTitle(){
- const hsE=LS.get("d2r_hs_easy","0"),hsH=LS.get("d2r_hs_hard","0");
+ const sfx=S.challenge?"_c":"",hsE=LS.get("d2r_hs_easy"+sfx,"0"),hsH=LS.get("d2r_hs_hard"+sfx,"0");
  $("titleBox").innerHTML=`<div class="logo">${esc(t("title"))}<small>${t("sub")}</small></div>`+(titleStage===0?
   `<button class="press" id="pressBtn">► ${t("press")} ◄</button><div style="font-size:12px;color:#9fd3ff">${t("tapToStart")}</div>`:
-  `<h2 style="text-align:center">${t("chooseLevel")}</h2><div class="lvl">
+  `<h2 style="text-align:center">${t("styleT")}</h2><div class="stylerow">
+   <button class="choice" id="stN" aria-pressed="${!S.challenge}">${t("normal")}<small>${t("normalDesc")}</small></button>
+   <button class="choice" id="stC" aria-pressed="${S.challenge}">${t("challenge")}<small>${t("challengeDesc")}</small></button></div>
+   <h2 style="text-align:center;margin-top:12px">${t("chooseLevel")}</h2><div class="lvl">
    <button class="choice" id="lvE">${t("easy")}<small>${t("easyDesc")}<br>${t("best")}: ${hsE}</small></button>
    <button class="choice" id="lvH" style="background:#8a1d1d;box-shadow:inset -3px -3px 0 #4a0b0b,inset 3px 3px 0 #e05555,0 0 0 2px #000">${t("hard")}<small>${t("hardDesc")}<br>${t("best")}: ${hsH}</small></button></div>
    <div class="how">${t("how")}<br><br>${t("keys")}</div>`);
  if(titleStage===0){$("pressBtn").onclick=pressStart;setTimeout(()=>$("pressBtn")&&$("pressBtn").focus({preventScroll:true}),30)}
- else{$("lvE").onclick=()=>{SFX.blip();newGame("easy")};$("lvH").onclick=()=>{SFX.blip();newGame("hard")};setTimeout(()=>$("lvE")&&$("lvE").focus({preventScroll:true}),30)}
+ else{const setSt=c=>{SFX.blip();S.challenge=c;LS.set("d2r_style",c?"challenge":"normal");renderTitle();setTimeout(()=>$(c?"stC":"stN")&&$(c?"stC":"stN").focus({preventScroll:true}),40)};$("stN").onclick=()=>setSt(false);$("stC").onclick=()=>setSt(true);
+  $("lvE").onclick=()=>{SFX.blip();newGame("easy")};$("lvH").onclick=()=>{SFX.blip();newGame("hard")};setTimeout(()=>$("lvE")&&$("lvE").focus({preventScroll:true}),30)}
 }
 function pressStart(){audioInit();musicStart();SFX.blip();titleStage=1;renderTitle()}
 $("title").addEventListener("click",e=>{if(titleStage===0&&e.target.id!=="pressBtn")pressStart()});
@@ -581,6 +618,7 @@ document.addEventListener("keydown",e=>{
  if(S.screen==="title"&&titleStage===0&&(k==="Enter"||k===" ")){e.preventDefault();pressStart();return}
  if(S.screen==="finale"&&(k==="Enter"||k===" "||k==="Escape")){e.preventDefault();skipFinale();return}
  if(S.screen!=="play")return;
+ if(!S.step&&S.challenge&&!S.revealing&&Object.keys(S.ans).length===6&&(k==="f"||k==="F")){startReveal();return}
  if(!S.step){
   const open=PARTS.filter(p=>!S.ans[p.p]).map(p=>p.p);if(!open.length)return;
   if(["ArrowRight","ArrowDown","ArrowLeft","ArrowUp"].includes(k)){e.preventDefault();let i=open.indexOf(S.sel);if(i<0)i=0;else i=(i+((k==="ArrowRight"||k==="ArrowDown")?1:open.length-1))%open.length;S.sel=open[i];SFX.tick();
@@ -588,13 +626,14 @@ document.addEventListener("keydown",e=>{
   if(/^[1-6]$/.test(k)){pickPart(+k);return}
   return;
  }
+ if(S.step==="saved"){if(k==="Escape"||k==="Enter"){e.preventDefault();$("fbGo")&&$("fbGo").click()}return}
  if(k==="Escape"){if(S.step==="mat")cancelDlg();else if(S.step==="king"){S.step="mat";renderDlg()}else fbContinue();return}
  if(S.step==="mat"&&/^[1-6]$/.test(k)){chooseMat(MATS[+k-1].id);return}
  if(S.step==="king"&&S.level==="easy"&&/^[1-6]$/.test(k)){submit(S.kingOrder[+k-1],null);return}
 });
 /* ================= LOOP ================= */
 function loop(ts){
- if(S.screen==="play"&&Object.keys(S.ans).length<6)S.elapsed=(performance.now()-S.t0)/1000;
+ if(S.screen==="play"&&(S.challenge?!S.stopped:Object.keys(S.ans).length<6))S.elapsed=(performance.now()-S.t0)/1000;
  if(S.shown<S.base&&S.screen==="play")S.shown=Math.min(S.base,S.shown+Math.max(2,(S.base-S.shown)*.12));
  if(S.screen==="play")updHud();
  render(ts);requestAnimationFrame(loop);
